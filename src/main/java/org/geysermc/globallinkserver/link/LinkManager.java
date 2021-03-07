@@ -110,10 +110,10 @@ public class LinkManager {
                 Connection connection = dataSource.getConnection();
 
                 PreparedStatement query = connection.prepareStatement(
-                        "INSERT INTO `links` (`javaId`, `bedrockId`, `javaName`) VALUES (?, ?, ?) "
+                        "INSERT INTO `links` (`java_id`, `bedrock_id`, `java_name`) VALUES (?, ?, ?) "
                                 + "ON DUPLICATE KEY UPDATE "
-                                + "`javaId` = VALUES(`javaId`), "
-                                + "`javaName` = VALUES(`javaName`);");
+                                + "`java_id` = VALUES(`java_id`), "
+                                + "`java_name` = VALUES(`java_name`);");
                 query.setString(1, tempLink.getJavaId().toString());
                 query.setLong(2, tempLink.getBedrockId().getLeastSignificantBits());
                 query.setString(3, tempLink.getJavaUsername());
@@ -132,11 +132,11 @@ public class LinkManager {
                 PreparedStatement query;
                 if (player instanceof JavaPlayer) {
                     query = connection.prepareStatement(
-                            "DELETE FROM `links` WHERE `javaId` = ?;");
+                            "DELETE FROM `links` WHERE `java_id` = ?;");
                     query.setString(1, player.getUniqueId().toString());
                 } else {
                     query = connection.prepareStatement(
-                            "DELETE FROM `links` WHERE `bedrockId` = ?;");
+                            "DELETE FROM `links` WHERE `bedrock_id` = ?;");
                     query.setLong(1, player.getUniqueId().getLeastSignificantBits());
                 }
                 return query.executeUpdate() != 0;
