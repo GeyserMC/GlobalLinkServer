@@ -25,42 +25,25 @@
 
 package org.geysermc.globallinkserver.java;
 
-import com.github.steveice10.mc.auth.data.GameProfile;
-import com.github.steveice10.mc.auth.service.SessionService;
-import com.github.steveice10.mc.protocol.MinecraftConstants;
-import com.github.steveice10.mc.protocol.MinecraftProtocol;
-import com.github.steveice10.mc.protocol.ServerLoginHandler;
-import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
-import com.github.steveice10.mc.protocol.data.status.PlayerInfo;
-import com.github.steveice10.mc.protocol.data.status.ServerStatusInfo;
-import com.github.steveice10.mc.protocol.data.status.VersionInfo;
-import com.github.steveice10.mc.protocol.data.status.handler.ServerInfoBuilder;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerJoinGamePacket;
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerPositionRotationPacket;
-import com.github.steveice10.packetlib.Server;
-import com.github.steveice10.packetlib.event.server.ServerAdapter;
-import com.github.steveice10.packetlib.event.server.ServerClosedEvent;
-import com.github.steveice10.packetlib.event.server.SessionAddedEvent;
-import com.github.steveice10.packetlib.event.session.ConnectedEvent;
-import com.github.steveice10.packetlib.tcp.TcpSessionFactory;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
+import org.cloudburstmc.protocol.java.JavaEventHandler;
+import org.cloudburstmc.protocol.java.JavaPacketCodec;
+import org.cloudburstmc.protocol.java.JavaPong;
+import org.cloudburstmc.protocol.java.JavaServerSession;
+import org.cloudburstmc.protocol.java.v754.Java_v754;
 import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
+
+import java.net.InetSocketAddress;
 
 @RequiredArgsConstructor
 public class JavaServer implements org.geysermc.globallinkserver.Server {
     private final PlayerManager playerManager;
     private final LinkManager linkManager;
 
-    private final ServerStatusInfo pong = new ServerStatusInfo(
-            new VersionInfo(MinecraftConstants.GAME_VERSION, MinecraftConstants.PROTOCOL_VERSION),
-            new PlayerInfo(1, 0, new GameProfile[0]),
-            Component.text("Global Link Server"),
-            null);
-
-    private Server server;
+    private org.cloudburstmc.protocol.java.JavaServer server;
 
     @Override
     public boolean startServer(Config config) {
@@ -68,53 +51,42 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
             return false;
         }
 
-        server = new Server(config.getBindIp(), config.getJavaPort(), MinecraftProtocol.class,
-                new TcpSessionFactory());
+        JavaPacketCodec codec = Java_v754.V754_CODEC;
 
-        server.setGlobalFlag(MinecraftConstants.SESSION_SERVICE_KEY, new SessionService());
-        server.setGlobalFlag(MinecraftConstants.VERIFY_USERS_KEY, true);
-        server.setGlobalFlag(MinecraftConstants.SERVER_INFO_BUILDER_KEY,
-                (ServerInfoBuilder) session -> pong);
-        server.setGlobalFlag(MinecraftConstants.SERVER_LOGIN_HANDLER_KEY,
-                (ServerLoginHandler) session -> {
-                    session.send(new ServerJoinGamePacket(
-                            0,
-                            false,
-                            GameMode.SPECTATOR,
-                            GameMode.SPECTATOR,
-                            1,
-                            new String[]{"minecraft:the_end"},
-                            TagManager.getDimensionTag(),
-                            TagManager.getEndTag(),
-                            "minecraft:the_end",
-                            100,
-                            1,
-                            0,
-                            false,
-                            false,
-                            false,
-                            false
-                    ));
+        InetSocketAddress bindAddress = new InetSocketAddress(config.getBindIp(),
+                config.getJavaPort());
 
-                    // Just send the position without sending chunks
-                    // This loads the player into an empty world and stops them from moving
-                    session.send(new ServerPlayerPositionRotationPacket(0, 64, 0, 0, 0, 0));
+        server = new org.cloudburstmc.protocol.java.JavaServer(bindAddress);
 
-                    // Manually call the connect event
-                    session.callEvent(new ConnectedEvent(session));
-                });
-        server.setGlobalFlag(MinecraftConstants.SERVER_COMPRESSION_THRESHOLD, 256); // default
+        // redundant, but makes it clear
+        server.setHandleLogin(true);
+        server.setOnlineMode(true);
 
-        server.addListener(new ServerAdapter() {
+        JavaPong pong = new JavaPong();
+        pong.setDescription(Component.text("Global Link Server"));
+        pong.setPlayers(new JavaPong.Players(1, 0));
+        pong.setVersion(
+                new JavaPong.Version(codec.getMinecraftVersion(), codec.getProtocolVersion()));
+
+        server.setPong((ignored) -> pong);
+
+        server.setHandler(new JavaEventHandler<JavaServerSession>() {
             @Override
-            public void serverClosed(ServerClosedEvent event) {
-                super.serverClosed(event);
+            public void onSessionCreation(JavaServerSession session) {
+                session.setPacketCodec(codec);
+                session.setPacketHandler(new PacketHandler(session, linkManager, playerManager));
             }
 
             @Override
-            public void sessionAdded(SessionAddedEvent event) {
-                event.getSession().addListener(
-                        new PacketHandler(event.getSession(), linkManager, playerManager));
+            public void onLogin(JavaServerSession session) {
+                // is called after the player logged in
+
+                PacketHandler handler = (PacketHandler) session.getPacketHandler();
+                handler.login();
+
+                // note to people when something doesn't seem to be called:
+                // you probably have an error in your code that is suppressed,
+                // so use a try and catch block manually
             }
         });
 

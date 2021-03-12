@@ -31,10 +31,10 @@ import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.math.vector.Vector3i;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.data.*;
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.geysermc.globallinkserver.bedrock.util.PaletteUtils;
 import org.geysermc.globallinkserver.player.Player;
 import org.geysermc.globallinkserver.util.Utils;
 
@@ -64,13 +64,13 @@ public class BedrockPlayer implements Player {
         packet.setXuid(xuid);
         packet.setType(TextPacket.Type.SYSTEM);
         packet.setNeedsTranslation(false);
-        packet.setMessage(formatMessage(message, false));
+        packet.setMessage(formatMessage(message));
         session.sendPacket(packet);
     }
 
     @Override
     public void disconnect(String reason) {
-        session.disconnect(formatMessage(reason, false));
+        session.disconnect(formatMessage(reason));
     }
 
     /**
@@ -122,27 +122,31 @@ public class BedrockPlayer implements Player {
         startGamePacket.setCurrentTick(0);
         startGamePacket.setEnchantmentSeed(0);
         startGamePacket.setMultiplayerCorrelationId("");
-        startGamePacket.setAuthoritativeMovementMode(AuthoritativeMovementMode.CLIENT);
         startGamePacket.setVanillaVersion("*");
-        session.sendPacket(startGamePacket);
 
-        // Send a CreativeContentPacket - required for 1.16.100
-        CreativeContentPacket creativeContentPacket = new CreativeContentPacket();
-        creativeContentPacket.setContents(new ItemData[0]);
-        session.sendPacket(creativeContentPacket);
+        // not needed after 1.16.200
+        startGamePacket.setAuthoritativeMovementMode(AuthoritativeMovementMode.CLIENT);
+
+        SyncedPlayerMovementSettings settings = new SyncedPlayerMovementSettings();
+        settings.setMovementMode(AuthoritativeMovementMode.CLIENT);
+        settings.setRewindHistorySize(0);
+        settings.setServerAuthoritativeBlockBreaking(false);
+        startGamePacket.setPlayerMovementSettings(settings);
+
+        session.sendPacket(startGamePacket);
 
         // Send an empty chunk
         LevelChunkPacket data = new LevelChunkPacket();
         data.setChunkX(0);
         data.setChunkZ(0);
         data.setSubChunksLength(0);
-        data.setData(PaletteManager.EMPTY_LEVEL_CHUNK_DATA);
+        data.setData(PaletteUtils.EMPTY_LEVEL_CHUNK_DATA);
         data.setCachingEnabled(false);
         session.sendPacket(data);
 
         // Send the biomes
         BiomeDefinitionListPacket biomeDefinitionListPacket = new BiomeDefinitionListPacket();
-        biomeDefinitionListPacket.setDefinitions(PaletteManager.BIOMES_PALETTE);
+        biomeDefinitionListPacket.setDefinitions(PaletteUtils.BIOMES_PALETTE);
         session.sendPacket(biomeDefinitionListPacket);
 
         // Let the client know the player can spawn

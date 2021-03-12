@@ -29,14 +29,13 @@ import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
 import com.nukkitx.protocol.bedrock.BedrockPong;
 import com.nukkitx.protocol.bedrock.BedrockServerEventHandler;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
-import com.nukkitx.protocol.bedrock.v419.Bedrock_v419;
+import com.nukkitx.protocol.bedrock.v428.Bedrock_v428;
 import lombok.RequiredArgsConstructor;
 import org.geysermc.globallinkserver.Server;
 import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
 
-import javax.annotation.Nonnull;
 import java.net.InetSocketAddress;
 
 @RequiredArgsConstructor
@@ -59,29 +58,30 @@ public class BedrockServer implements Server {
 
         BedrockPong pong = new BedrockPong();
         pong.setEdition("MCPE");
-        pong.setMotd("Global Linking Server");
+        pong.setMotd("Global Linking");
+        pong.setSubMotd("Server");
         pong.setPlayerCount(0);
         pong.setMaximumPlayerCount(1);
         pong.setGameType("Survival");
         pong.setIpv4Port(config.getBedrockPort());
 
-        BedrockPacketCodec codec = Bedrock_v419.V419_CODEC;
+        BedrockPacketCodec codec = Bedrock_v428.V428_CODEC;
         pong.setProtocolVersion(codec.getProtocolVersion());
         pong.setVersion(codec.getMinecraftVersion());
 
         server.setHandler(new BedrockServerEventHandler() {
             @Override
-            public boolean onConnectionRequest(@Nonnull InetSocketAddress address) {
+            public boolean onConnectionRequest(InetSocketAddress address) {
                 return true;
             }
 
             @Override
-            public BedrockPong onQuery(@Nonnull InetSocketAddress address) {
+            public BedrockPong onQuery(InetSocketAddress address) {
                 return pong;
             }
 
             @Override
-            public void onSessionCreation(@Nonnull BedrockServerSession session) {
+            public void onSessionCreation(BedrockServerSession session) {
                 session.setPacketHandler(new PacketHandler(session, playerManager, linkManager));
             }
         });

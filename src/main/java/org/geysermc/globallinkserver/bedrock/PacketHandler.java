@@ -31,7 +31,7 @@ import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
 import com.nukkitx.protocol.bedrock.packet.*;
-import com.nukkitx.protocol.bedrock.v419.Bedrock_v419;
+import org.geysermc.globallinkserver.bedrock.util.BedrockVersionUtils;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
 import org.geysermc.globallinkserver.util.CommandUtils;
@@ -64,19 +64,22 @@ public class PacketHandler implements BedrockPacketHandler {
 
     @Override
     public boolean handle(LoginPacket packet) {
-        BedrockPacketCodec codec = Bedrock_v419.V419_CODEC;
-        if (packet.getProtocolVersion() != codec.getProtocolVersion()) {
+        BedrockPacketCodec packetCodec =
+                BedrockVersionUtils.getBedrockCodec(packet.getProtocolVersion());
+
+        if (packetCodec == null) {
             PlayStatusPacket status = new PlayStatusPacket();
-            if (packet.getProtocolVersion() > codec.getProtocolVersion()) {
+            if (packet.getProtocolVersion() > packet.getProtocolVersion()) {
                 status.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_SERVER_OLD);
             } else {
                 status.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_CLIENT_OLD);
             }
             session.sendPacket(status);
+            session.disconnect();
             return true;
         }
 
-        session.setPacketCodec(codec);
+        session.setPacketCodec(packetCodec);
 
         try {
             JsonObject extraData = Utils.validateData(packet.getChainData().toString(),

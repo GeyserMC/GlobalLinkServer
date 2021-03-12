@@ -23,7 +23,7 @@
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
 
-package org.geysermc.globallinkserver.bedrock;
+package org.geysermc.globallinkserver.bedrock.util;
 
 import com.nukkitx.nbt.*;
 
@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * This class is mostly copied from Geyser
  */
-public class PaletteManager {
+public class PaletteUtils {
     public static final NbtList<NbtMap> BLOCK_PALETTE;
     public static final NbtMap BIOMES_PALETTE;
     public static final byte[] EMPTY_LEVEL_CHUNK_DATA;

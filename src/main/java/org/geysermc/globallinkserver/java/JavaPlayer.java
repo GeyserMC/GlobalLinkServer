@@ -25,33 +25,39 @@
 
 package org.geysermc.globallinkserver.java;
 
-import com.github.steveice10.mc.auth.data.GameProfile;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerChatPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerDisconnectPacket;
-import com.github.steveice10.packetlib.Session;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.kyori.adventure.text.Component;
+import org.cloudburstmc.protocol.java.JavaServerSession;
+import org.cloudburstmc.protocol.java.data.profile.GameProfile;
+import org.cloudburstmc.protocol.java.data.text.ChatPosition;
+import org.cloudburstmc.protocol.java.packet.play.clientbound.ServerChatPacket;
 import org.geysermc.globallinkserver.player.Player;
 
 import java.util.UUID;
 
 @RequiredArgsConstructor
 public class JavaPlayer implements Player {
-    private final Session session;
+    private static final UUID SENDER = new UUID(0, 0);
+
+    private final JavaServerSession session;
     private final GameProfile profile;
     @Getter @Setter
     private int linkId;
 
     @Override
     public void sendMessage(String message) {
-        // Apparently MCProtocolLib isn't aware that the non-json format is still valid :/
-        session.send(new ServerChatPacket(formatMessage(message, true)));
+        ServerChatPacket packet = new ServerChatPacket();
+        packet.setPosition(ChatPosition.CHAT_BOX);
+        packet.setMessage(Component.text(formatMessage(message)));
+        packet.setSenderUuid(SENDER);
+
+        session.sendPacket(packet);
     }
 
     @Override
     public void disconnect(String reason) {
-        session.send(new ServerDisconnectPacket(formatMessage(reason, true)));
         session.disconnect(reason);
     }
 

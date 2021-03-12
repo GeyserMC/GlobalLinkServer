@@ -25,67 +25,93 @@
 
 package org.geysermc.globallinkserver.java;
 
-import com.github.steveice10.mc.auth.data.GameProfile;
-import com.github.steveice10.mc.protocol.MinecraftConstants;
-import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket;
-import com.github.steveice10.packetlib.Session;
-import com.github.steveice10.packetlib.event.session.ConnectedEvent;
-import com.github.steveice10.packetlib.event.session.DisconnectedEvent;
-import com.github.steveice10.packetlib.event.session.PacketReceivedEvent;
-import com.github.steveice10.packetlib.event.session.SessionAdapter;
+import com.nukkitx.math.vector.Vector2f;
+import com.nukkitx.math.vector.Vector3d;
+import com.nukkitx.network.util.DisconnectReason;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.key.Key;
+import org.cloudburstmc.protocol.java.JavaServerSession;
+import org.cloudburstmc.protocol.java.data.GameType;
+import org.cloudburstmc.protocol.java.handler.JavaHandshakePacketHandler;
+import org.cloudburstmc.protocol.java.handler.JavaPlayPacketHandler;
+import org.cloudburstmc.protocol.java.packet.handshake.HandshakingPacket;
+import org.cloudburstmc.protocol.java.packet.play.clientbound.LoginPacket;
+import org.cloudburstmc.protocol.java.packet.play.clientbound.PlayerPositionPacket;
+import org.cloudburstmc.protocol.java.packet.play.serverbound.ClientChatPacket;
+import org.cloudburstmc.protocol.java.v754.Java_v754;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
 import org.geysermc.globallinkserver.util.CommandUtils;
 
 @RequiredArgsConstructor
-public class PacketHandler extends SessionAdapter {
-    private final Session session;
+public class PacketHandler implements JavaPlayPacketHandler, JavaHandshakePacketHandler {
+    private final JavaServerSession session;
     private final LinkManager linkManager;
     private final PlayerManager playerManager;
 
     private JavaPlayer player;
     private long lastCommand;
 
-    @Override
-    public void packetReceived(PacketReceivedEvent event) {
-        try {
-            if (event.getPacket() instanceof ClientChatPacket) {
-                String message = ((ClientChatPacket) event.getPacket()).getMessage();
+    public void login() {
+        // call when the player disconnected
+        session.getDisconnectHandlers().add(this::disconnected);
 
-                if (message.startsWith("/")) {
-                    long now = System.currentTimeMillis();
-                    if (now - lastCommand < 4_000) {
-                        player.sendMessage("&cYou're sending commands too fast");
-                        return;
-                    }
-                    lastCommand = now;
-                    CommandUtils.handleCommand(linkManager, playerManager, player, message);
-                } else {
-                    player.sendMessage("&7The darkness doesn't know how to respond to your message");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        LoginPacket loginPacket = new LoginPacket();
+
+        loginPacket.setEntityId(0);
+        loginPacket.setHardcore(false);
+        loginPacket.setGameType(GameType.SPECTATOR);
+        loginPacket.setPreviousGameType(GameType.SPECTATOR);
+        loginPacket.setDimensions(new Key[]{Key.key("the_end")});
+        loginPacket.setDimensionCodec(TagManager.getDimensionTag());
+        loginPacket.setDimension(TagManager.getEndTag());
+        loginPacket.setDimensionName(Key.key("the_end"));
+        loginPacket.setSeedHash(100);
+        loginPacket.setMaxPlayers(1);
+        loginPacket.setChunkRadius(0);
+
+        PlayerPositionPacket positionPacket = new PlayerPositionPacket();
+
+        positionPacket.setPosition(Vector3d.from(0, 64, 0));
+        positionPacket.setRotation(Vector2f.ZERO);
+
+        session.sendPacket(loginPacket);
+        session.sendPacket(positionPacket);
+
+        player = playerManager.addJavaPlayer(session, session.getProfile());
+        player.sendJoinMessages();
     }
 
-    @Override
-    public void connected(ConnectedEvent event) {
-        try {
-            GameProfile profile = event.getSession().getFlag(MinecraftConstants.PROFILE_KEY);
-
-            player = playerManager.addJavaPlayer(session, profile);
-            player.sendJoinMessages();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void disconnected(DisconnectedEvent event) {
+    public void disconnected(DisconnectReason reason) {
         if (player != null) {
             playerManager.removeJavaPlayer(player);
         }
+    }
+
+    @Override
+    public boolean handle(HandshakingPacket packet) {
+        if (packet.getProtocolVersion() != Java_v754.V754_CODEC.getProtocolVersion()) {
+            session.disconnect("You aren't running: " + Java_v754.V754_CODEC.getMinecraftVersion()
+                    + ". Please use that version and try again");
+        }
+        return true;
+    }
+
+    @Override
+    public boolean handle(ClientChatPacket packet) {
+        String message = packet.getMessage();
+
+        if (message.startsWith("/")) {
+            long now = System.currentTimeMillis();
+            if (now - lastCommand < 4_000) {
+                player.sendMessage("&cYou're sending commands too fast");
+                return true;
+            }
+            lastCommand = now;
+            CommandUtils.handleCommand(linkManager, playerManager, player, message);
+        } else {
+            player.sendMessage("&7The darkness doesn't know how to respond to your message");
+        }
+        return true;
     }
 }

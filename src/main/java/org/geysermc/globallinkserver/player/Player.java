@@ -45,11 +45,7 @@ public interface Player {
         sendMessage("&eTo unlink your account (if it is linked) run `&9/unlinkaccount&e`.");
     }
 
-    default String formatMessage(String message, boolean json) {
-        message = message.replaceAll("&", "§");
-        if (json) {
-            return "{\"text\": \"" + message + "\"}";
-        }
-        return message;
+    default String formatMessage(String message) {
+        return message.replaceAll("&", "§");
     }
 }

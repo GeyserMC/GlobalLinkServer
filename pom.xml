@@ -16,15 +16,20 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.nukkitx.protocol</groupId>
-      <artifactId>bedrock-v419</artifactId>
-      <version>2.6.1-SNAPSHOT</version>
+      <groupId>com.github.CloudburstMC.Protocol</groupId>
+      <artifactId>bedrock-v428</artifactId>
+      <version>92a373a</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.steveice10</groupId>
-      <artifactId>mcprotocollib</artifactId>
-      <version>da520d8</version>
+      <groupId>com.nukkitx.fastutil</groupId>
+      <artifactId>fastutil-common</artifactId>
+      <version>8.5.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.nukkitx.protocol</groupId>
+      <artifactId>java-v754</artifactId>
+      <version>2.6.1-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -42,6 +47,10 @@
   </dependencies>
 
   <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
     <repository>
       <id>opencollab-release-repo</id>
       <url>https://repo.opencollab.dev/maven-releases/</url>
@@ -61,10 +70,6 @@
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
-    </repository>
-    <repository>
-      <id>jitpack.io</id>
-      <url>https://jitpack.io</url>
     </repository>
   </repositories>
 
