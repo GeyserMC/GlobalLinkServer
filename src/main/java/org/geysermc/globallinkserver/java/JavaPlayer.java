@@ -58,7 +58,7 @@ public class JavaPlayer implements Player {
 
     @Override
     public void disconnect(String reason) {
-        session.disconnect(reason);
+        session.disconnect(formatMessage(reason));
     }
 
     @Override
