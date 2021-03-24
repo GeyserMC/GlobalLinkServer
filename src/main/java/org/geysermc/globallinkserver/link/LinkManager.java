@@ -47,6 +47,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class LinkManager {
+    private static final int TEMP_LINK_DURATION = 60_000 * 15; // 15 min
     private final Int2ObjectMap<TempLink> tempLinks = new Int2ObjectOpenHashMap<>();
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(3);
@@ -74,7 +75,7 @@ public class LinkManager {
         } else {
             link.setBedrockId(player.getUniqueId());
         }
-        link.setExpiryTime(System.currentTimeMillis() + (60_000 * 30));
+        link.setExpiryTime(System.currentTimeMillis() + TEMP_LINK_DURATION);
         link.setCode(createCode());
 
         tempLinks.put(link.getCode(), link);
@@ -85,19 +86,25 @@ public class LinkManager {
     }
 
     private int createCode() {
-        int code;
-        do {
+        int code = -1;
+        while (code == -1) {
             code = random.nextInt(9999) + 1;
-        } while (tempLinks.containsKey(code));
+
+            TempLink link = tempLinks.get(code);
+            if (isLinkValid(link)) {
+                code = -1;
+            }
+        }
         return code;
     }
 
     public TempLink getTempLink(int linkId) {
         TempLink link = tempLinks.remove(linkId);
-        if (link != null && System.currentTimeMillis() - link.getExpiryTime() < (60_000 * 30)) {
-            return link;
-        }
-        return null;
+        return isLinkValid(link) ? link : null;
+    }
+
+    private boolean isLinkValid(TempLink link) {
+        return link != null && System.currentTimeMillis() - link.getExpiryTime() < TEMP_LINK_DURATION;
     }
 
     public void removeTempLink(int linkId) {
