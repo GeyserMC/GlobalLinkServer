@@ -25,89 +25,90 @@
 
 package org.geysermc.globallinkserver.java;
 
-import com.nukkitx.nbt.NbtMap;
-import com.nukkitx.nbt.NbtMapBuilder;
-import com.nukkitx.nbt.NbtType;
+import com.github.steveice10.opennbt.tag.builtin.*;
 
 import java.util.Map;
 
 public class TagManager {
-    public static NbtMap getDimensionTag() {
-        NbtMapBuilder tag = NbtMap.builder();
+    public static CompoundTag getDimensionTag() {
+        CompoundTag tag = new CompoundTag("");
 
-        NbtMapBuilder dimensionTypes = NbtMap.builder();
-        dimensionTypes.putString("type", "minecraft:dimension_type");
+        CompoundTag dimensionTypes = new CompoundTag("minecraft:dimension_type");
+        dimensionTypes.put(new StringTag("type", "minecraft:dimension_type"));
+        ListTag dimensionTag = new ListTag("value");
+        CompoundTag overworldTag = convertToValue("minecraft:the_end", 0, getEndTag().getValue());
+        dimensionTag.add(overworldTag);
+        dimensionTypes.put(dimensionTag);
+        tag.put(dimensionTypes);
 
-        dimensionTypes.putList("value", NbtType.COMPOUND,
-                convertToValue("minecraft:the_end", 0, getEndTag()));
-        tag.putCompound("minecraft:dimension_type", dimensionTypes.build());
+        CompoundTag biomeTypes = new CompoundTag("minecraft:worldgen/biome");
+        biomeTypes.put(new StringTag("type", "minecraft:worldgen/biome"));
+        ListTag biomeTag = new ListTag("value");
+        CompoundTag plainsTag = convertToValue("minecraft:plains", 0, getEndBiomeTag().getValue());
+        biomeTag.add(plainsTag);
+        biomeTypes.put(biomeTag);
+        tag.put(biomeTypes);
 
-        NbtMapBuilder biomeTypes = NbtMap.builder();
-        biomeTypes.putString("type", "minecraft:worldgen/biome");
-        biomeTypes.putList("value", NbtType.COMPOUND,
-                convertToValue("minecraft:plains", 0, getEndBiomeTag()));
-
-        tag.putCompound("minecraft:worldgen/biome", biomeTypes.build());
-        return tag.build();
+        return tag;
     }
 
-    public static NbtMap getEndTag() {
-        NbtMapBuilder overworldTag = NbtMap.builder();
-        overworldTag.putString("name", "minecraft:the_end");
-        overworldTag.putByte("piglin_safe", (byte) 0);
-        overworldTag.putByte("natural", (byte) 0);
-        overworldTag.putFloat("ambient_light", 0f);
-        overworldTag.putString("infiniburn", "minecraft:infiniburn_end");
-        overworldTag.putByte("respawn_anchor_works", (byte) 0);
-        overworldTag.putByte("has_skylight", (byte) 0);
-        overworldTag.putByte("bed_works", (byte) 0);
-        overworldTag.putString("effects", "minecraft:the_end");
-        overworldTag.putLong("fixed_time", 6000L);
-        overworldTag.putByte("has_raids", (byte) 1);
-        overworldTag.putInt("logical_height", 256);
-        overworldTag.putFloat("coordinate_scale", 1f);
-        overworldTag.putByte("ultrawarm", (byte) 0);
-        overworldTag.putByte("has_ceiling", (byte) 0);
-        return overworldTag.build();
+    public static CompoundTag getEndTag() {
+        CompoundTag overworldTag = new CompoundTag("");
+        overworldTag.put(new StringTag("name", "minecraft:the_end"));
+        overworldTag.put(new ByteTag("piglin_safe", (byte) 0));
+        overworldTag.put(new ByteTag("natural", (byte) 0));
+        overworldTag.put(new FloatTag("ambient_light", 0f));
+        overworldTag.put(new StringTag("infiniburn", "minecraft:infiniburn_end"));
+        overworldTag.put(new ByteTag("respawn_anchor_works", (byte) 0));
+        overworldTag.put(new ByteTag("has_skylight", (byte) 0));
+        overworldTag.put(new ByteTag("bed_works", (byte) 0));
+        overworldTag.put(new StringTag("effects", "minecraft:the_end"));
+        overworldTag.put(new LongTag("fixed_time", 6000L));
+        overworldTag.put(new ByteTag("has_raids", (byte) 1));
+        overworldTag.put(new IntTag("logical_height", 256));
+        overworldTag.put(new FloatTag("coordinate_scale", 1f));
+        overworldTag.put(new ByteTag("ultrawarm", (byte) 0));
+        overworldTag.put(new ByteTag("has_ceiling", (byte) 0));
+        return overworldTag;
     }
 
-    private static NbtMap getEndBiomeTag() {
-        NbtMapBuilder plainsTag = NbtMap.builder();
-        plainsTag.putString("name", "minecraft:the_end");
-        plainsTag.putString("precipitation", "none");
-        plainsTag.putFloat("depth", 0.1f);
-        plainsTag.putFloat("temperature", 0.5f);
-        plainsTag.putFloat("scale", 0.2f);
-        plainsTag.putFloat("downfall", 0.5f);
-        plainsTag.putString("category", "the_end");
+    private static CompoundTag getEndBiomeTag() {
+        CompoundTag plainsTag = new CompoundTag("");
+        plainsTag.put(new StringTag("name", "minecraft:the_end"));
+        plainsTag.put(new StringTag("precipitation", "none"));
+        plainsTag.put(new FloatTag("depth", 0.1f));
+        plainsTag.put(new FloatTag("temperature", 0.5f));
+        plainsTag.put(new FloatTag("scale", 0.2f));
+        plainsTag.put(new FloatTag("downfall", 0.5f));
+        plainsTag.put(new StringTag("category", "the_end"));
 
-        NbtMapBuilder effects = NbtMap.builder();
-        effects.putLong("sky_color", 0);
-        effects.putLong("water_fog_color", 329011);
-        effects.putLong("fog_color", 10518688);
-        effects.putLong("water_color", 4159204);
-        plainsTag.putCompound("effects", effects.build());
+        CompoundTag effects = new CompoundTag("effects");
+        effects.put(new LongTag("sky_color", 0));
+        effects.put(new LongTag("water_fog_color", 329011));
+        effects.put(new LongTag("fog_color", 10518688));
+        effects.put(new LongTag("water_color", 4159204));
 
-        NbtMapBuilder moodSound = NbtMap.builder();
-        moodSound.putInt("tick_delay", 6000);
-        moodSound.putFloat("offset", 2.0f);
-        moodSound.putString("sound", "minecraft:ambient.cave");
-        moodSound.putInt("block_search_extent", 8);
+        CompoundTag moodSound = new CompoundTag("mood_sound");
+        moodSound.put(new IntTag("tick_delay", 6000));
+        moodSound.put(new FloatTag("offset", 2.0f));
+        moodSound.put(new StringTag("sound", "minecraft:ambient.cave"));
+        moodSound.put(new IntTag("block_search_extent", 8));
 
-        effects.putCompound("mood_sound", moodSound.build());
+        effects.put(moodSound);
 
-        return plainsTag.build();
+        plainsTag.put(effects);
+
+        return plainsTag;
     }
 
-    private static NbtMap convertToValue(String name, int id, Map<String, Object> values) {
-        NbtMapBuilder tag = NbtMap.builder();
-        tag.putString("name", name);
-        tag.putInt("id", id);
+    private static CompoundTag convertToValue(String name, int id, Map<String, Tag> values) {
+        CompoundTag tag = new CompoundTag(name);
+        tag.put(new StringTag("name", name));
+        tag.put(new IntTag("id", id));
+        CompoundTag element = new CompoundTag("element");
+        element.setValue(values);
+        tag.put(element);
 
-        NbtMapBuilder element = NbtMap.builder();
-        element.putAll(values);
-
-        tag.putCompound("element", element.build());
-        return tag.build();
+        return tag;
     }
 }

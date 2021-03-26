@@ -27,9 +27,9 @@
       <version>8.5.2</version>
     </dependency>
     <dependency>
-      <groupId>com.nukkitx.protocol</groupId>
-      <artifactId>java-v754</artifactId>
-      <version>2.6.1-SNAPSHOT</version>
+      <groupId>com.github.steveice10</groupId>
+      <artifactId>mcprotocollib</artifactId>
+      <version>da520d8</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
