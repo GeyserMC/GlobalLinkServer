@@ -104,7 +104,8 @@ public class LinkManager {
     }
 
     private boolean isLinkValid(TempLink link) {
-        return link != null && System.currentTimeMillis() - link.getExpiryTime() < TEMP_LINK_DURATION;
+        long currentMillis = System.currentTimeMillis();
+        return link != null && currentMillis - link.getExpiryTime() < TEMP_LINK_DURATION;
     }
 
     public void removeTempLink(int linkId) {
@@ -113,18 +114,18 @@ public class LinkManager {
 
     public CompletableFuture<Boolean> finaliseLink(TempLink tempLink) {
         return CompletableFuture.supplyAsync(() -> {
-            try {
-                Connection connection = dataSource.getConnection();
-
-                PreparedStatement query = connection.prepareStatement(
-                        "INSERT INTO `links` (`java_id`, `bedrock_id`, `java_name`) VALUES (?, ?, ?) "
-                                + "ON DUPLICATE KEY UPDATE "
-                                + "`java_id` = VALUES(`java_id`), "
-                                + "`java_name` = VALUES(`java_name`);");
-                query.setString(1, tempLink.getJavaId().toString());
-                query.setLong(2, tempLink.getBedrockId().getLeastSignificantBits());
-                query.setString(3, tempLink.getJavaUsername());
-                return query.executeUpdate() != 0;
+            try (Connection connection = dataSource.getConnection()) {
+                try (PreparedStatement query = connection.prepareStatement(
+                        "INSERT INTO `links` (`java_id`, `bedrock_id`, `java_name`) VALUES (?, ?, ?) " +
+                                "ON DUPLICATE KEY UPDATE " +
+                                "`java_id` = VALUES(`java_id`)," +
+                                "`bedrock_id` = VALUES(`bedrock_id`)," +
+                                "`java_name` = VALUES(`java_name`);")) {
+                    query.setString(1, tempLink.getJavaId().toString());
+                    query.setLong(2, tempLink.getBedrockId().getLeastSignificantBits());
+                    query.setString(3, tempLink.getJavaUsername());
+                    return query.executeUpdate() != 0;
+                }
             } catch (SQLException exception) {
                 throw new CompletionException("Error while linking player", exception);
             }
@@ -133,8 +134,7 @@ public class LinkManager {
 
     public CompletableFuture<Boolean> unlinkAccount(Player player) {
         return CompletableFuture.supplyAsync(() -> {
-            try {
-                Connection connection = dataSource.getConnection();
+            try (Connection connection = dataSource.getConnection()) {
 
                 PreparedStatement query;
                 if (player instanceof JavaPlayer) {
@@ -146,7 +146,9 @@ public class LinkManager {
                             "DELETE FROM `links` WHERE `bedrock_id` = ?;");
                     query.setLong(1, player.getUniqueId().getLeastSignificantBits());
                 }
-                return query.executeUpdate() != 0;
+                boolean affected = query.executeUpdate() != 0;
+                query.close();
+                return affected;
             } catch (SQLException exception) {
                 throw new CompletionException("Error while unlinking player", exception);
             }
