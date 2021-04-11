@@ -17,8 +17,8 @@
   <dependencies>
     <dependency>
       <groupId>com.github.CloudburstMC.Protocol</groupId>
-      <artifactId>bedrock-v428</artifactId>
-      <version>92a373a</version>
+      <artifactId>bedrock-v431</artifactId>
+      <version>f8ecf54</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
