@@ -65,6 +65,7 @@ public class CommandUtils {
 
                 if (tempLink.getJavaId() == null || tempLink.getBedrockId() == null) {
                     player.sendMessage("&cWelp.. You can only link a Java account to a Bedrock account. Try to start the linking process again.");
+                    return;
                 }
 
                 linkManager.finaliseLink(tempLink).whenComplete((result, error) -> {
