@@ -30,11 +30,16 @@ import com.github.steveice10.mc.auth.service.SessionService;
 import com.github.steveice10.mc.protocol.MinecraftConstants;
 import com.github.steveice10.mc.protocol.MinecraftProtocol;
 import com.github.steveice10.mc.protocol.ServerLoginHandler;
+import com.github.steveice10.mc.protocol.data.game.command.CommandNode;
+import com.github.steveice10.mc.protocol.data.game.command.CommandParser;
+import com.github.steveice10.mc.protocol.data.game.command.CommandType;
+import com.github.steveice10.mc.protocol.data.game.command.properties.IntegerProperties;
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
 import com.github.steveice10.mc.protocol.data.status.PlayerInfo;
 import com.github.steveice10.mc.protocol.data.status.ServerStatusInfo;
 import com.github.steveice10.mc.protocol.data.status.VersionInfo;
 import com.github.steveice10.mc.protocol.data.status.handler.ServerInfoBuilder;
+import com.github.steveice10.mc.protocol.packet.ingame.server.ServerDeclareCommandsPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.server.ServerJoinGamePacket;
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerPositionRotationPacket;
 import com.github.steveice10.packetlib.Server;
@@ -77,6 +82,17 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                 (ServerInfoBuilder) session -> pong);
         server.setGlobalFlag(MinecraftConstants.SERVER_LOGIN_HANDLER_KEY,
                 (ServerLoginHandler) session -> {
+
+                    session.send(new ServerDeclareCommandsPacket(
+                            new CommandNode[]{
+                                    new CommandNode(CommandType.ROOT, true, new int[]{1, 3}, -1, null, null, null, null),
+                                    new CommandNode(CommandType.LITERAL, true, new int[]{2}, -1, "linkaccount", null, null, null),
+                                    new CommandNode(CommandType.ARGUMENT, true, new int[0], -1, "code", CommandParser.INTEGER, new IntegerProperties(0, 9999), null),
+                                    new CommandNode(CommandType.LITERAL, true, new int[0], -1, "unlinkaccount", null, null, null)
+                            },
+                            0
+                    ));
+
                     session.send(new ServerJoinGamePacket(
                             0,
                             false,
