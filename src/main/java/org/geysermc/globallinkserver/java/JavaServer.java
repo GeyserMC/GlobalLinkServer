@@ -47,7 +47,7 @@ import com.github.steveice10.packetlib.event.server.ServerAdapter;
 import com.github.steveice10.packetlib.event.server.ServerClosedEvent;
 import com.github.steveice10.packetlib.event.server.SessionAddedEvent;
 import com.github.steveice10.packetlib.event.session.ConnectedEvent;
-import com.github.steveice10.packetlib.tcp.TcpSessionFactory;
+import com.github.steveice10.packetlib.tcp.TcpServer;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.geysermc.globallinkserver.config.Config;
@@ -73,8 +73,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
             return false;
         }
 
-        server = new Server(config.getBindIp(), config.getJavaPort(), MinecraftProtocol.class,
-                new TcpSessionFactory());
+        server = new TcpServer(config.getBindIp(), config.getJavaPort(), MinecraftProtocol.class);
 
         server.setGlobalFlag(MinecraftConstants.SESSION_SERVICE_KEY, new SessionService());
         server.setGlobalFlag(MinecraftConstants.VERIFY_USERS_KEY, true);
@@ -114,7 +113,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
 
                     // Just send the position without sending chunks
                     // This loads the player into an empty world and stops them from moving
-                    session.send(new ServerPlayerPositionRotationPacket(0, 64, 0, 0, 0, 0));
+                    session.send(new ServerPlayerPositionRotationPacket(0, 64, 0, 0, 0, 0, false));
 
                     // Manually call the connect event
                     session.callEvent(new ConnectedEvent(session));

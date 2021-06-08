@@ -116,6 +116,7 @@ public class BedrockPlayer implements Player {
         startGamePacket.setFromWorldTemplate(false);
         startGamePacket.setWorldTemplateOptionLocked(false);
 
+        startGamePacket.setServerEngine("");
         startGamePacket.setLevelId("");
         startGamePacket.setLevelName("GlobalLinkServer");
         startGamePacket.setPremiumWorldTemplateId("");
