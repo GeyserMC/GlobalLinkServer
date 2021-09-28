@@ -27,10 +27,14 @@ package org.geysermc.globallinkserver.util;
 
 import com.google.gson.*;
 import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
+import com.nimbusds.jose.shaded.json.JSONObject;
+import com.nimbusds.jose.shaded.json.JSONValue;
+import com.nukkitx.network.util.Preconditions;
 import com.nukkitx.protocol.bedrock.util.EncryptionUtils;
 
+import java.net.URI;
 import java.security.interfaces.ECPublicKey;
+import java.util.Iterator;
 
 public class Utils {
     private static final Gson GSON = new Gson();
@@ -51,7 +55,7 @@ public class Utils {
         }
     }
 
-    public static JsonObject validateData(String chainDataString, String skinDataString) {
+    public static JsonObject validateData(String chainDataString, String skinDataString) throws Exception {
         // Read the raw chain data
         JsonObject rawChainData;
         try {
@@ -68,42 +72,81 @@ public class Utils {
 
         JsonArray chainData = chainDataTemp.getAsJsonArray();
 
-        try {
-            // Parse the signed jws object
-            JWSObject jwsObject;
-            jwsObject = JWSObject.parse(chainData.get(chainData.size() - 1).getAsString());
-
-            // Read the JWS payload
-            JsonObject payload = GSON.fromJson(jwsObject.getPayload().toString(), JsonObject.class);
-
-            JsonElement publicKey = payload.get("identityPublicKey");
-
-            // Check if the identityPublicKey is there
-            if (publicKey == null) {
-                throw new AssertionError("Missing identity public key!");
-            }
-
-            // Create an ECPublicKey from the identityPublicKey
-            ECPublicKey identityPublicKey = EncryptionUtils.generateKey(publicKey.getAsString());
-
-            // Get the skin data to validate the JWS token
-            JWSObject skinData = JWSObject.parse(skinDataString);
-            if (skinData.verify(new DefaultJWSVerifierFactory()
-                    .createJWSVerifier(skinData.getHeader(), identityPublicKey))) {
-                JsonElement extraDataTemp = payload.get("extraData");
-
-                // Make sure the client sent over the username, xuid and other info
-                if (extraDataTemp == null || !extraDataTemp.isJsonObject()) {
-                    throw new AssertionError("Missing client data");
-                }
-
-                // Fetch the client data
-                return extraDataTemp.getAsJsonObject();
-            } else {
-                throw new AssertionError("Invalid identity public key!");
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to login", e);
+        if (!validateChainData(chainData)) {
+            throw new AssertionError("Invalid chain data");
         }
+        JWSObject jwsObject = JWSObject.parse(chainData.get(chainData.size() - 1).getAsString());
+        JsonObject payload = GSON.fromJson(jwsObject.getPayload().toString(), JsonObject.class);
+
+        JsonElement publicKey = payload.get("identityPublicKey");
+
+        if (publicKey == null) {
+            throw new AssertionError("Missing identity public key!");
+        }
+        ECPublicKey identityPublicKey = EncryptionUtils.generateKey(publicKey.getAsString());
+
+        JWSObject skinData = JWSObject.parse(skinDataString);
+        if (!EncryptionUtils.verifyJwt(skinData, identityPublicKey)) {
+            throw new AssertionError("Invalid skin data");
+        }
+
+        JsonElement extraDataTemp = payload.get("extraData");
+
+        // Make sure the client sent over the username, xuid and other info
+        if (extraDataTemp == null || !extraDataTemp.isJsonObject()) {
+            throw new AssertionError("Missing client data");
+        }
+
+        // Fetch the client data
+        return extraDataTemp.getAsJsonObject();
+    }
+
+    private static boolean validateChainData(JsonArray data) throws Exception {
+        if (data.size() != 3) {
+            return false;
+        }
+
+        ECPublicKey lastKey = null;
+        boolean mojangSigned = false;
+        Iterator<JsonElement> iterator = data.iterator();
+        while (iterator.hasNext()) {
+            JsonElement node = iterator.next();
+            JWSObject jwt = JWSObject.parse(node.getAsString());
+
+            // x509 cert is expected in every claim
+            URI x5u = jwt.getHeader().getX509CertURL();
+            if (x5u == null) {
+                return false;
+            }
+
+            ECPublicKey expectedKey = EncryptionUtils.generateKey(jwt.getHeader().getX509CertURL().toString());
+            // First key is self-signed
+            if (lastKey == null) {
+                lastKey = expectedKey;
+            } else if (!lastKey.equals(expectedKey)) {
+                return false;
+            }
+
+            if (!EncryptionUtils.verifyJwt(jwt, lastKey)) {
+                return false;
+            }
+
+            if (mojangSigned) {
+                return !iterator.hasNext();
+            }
+
+            if (lastKey.equals(EncryptionUtils.getMojangPublicKey())) {
+                mojangSigned = true;
+            }
+
+            Object payload = JSONValue.parse(jwt.getPayload().toString());
+            Preconditions.checkArgument(payload instanceof JSONObject, "Payload is not an object");
+
+            Object identityPublicKey = ((JSONObject) payload).get("identityPublicKey");
+            Preconditions.checkArgument(identityPublicKey instanceof String, "identityPublicKey node is missing in chain");
+            lastKey = EncryptionUtils.generateKey((String) identityPublicKey);
+        }
+
+        return mojangSigned;
     }
 }

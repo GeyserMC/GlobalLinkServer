@@ -82,8 +82,10 @@ public class PacketHandler implements BedrockPacketHandler {
         session.setPacketCodec(packetCodec);
 
         try {
-            JsonObject extraData = Utils.validateData(packet.getChainData().toString(),
-                    packet.getSkinData().toString());
+            JsonObject extraData = Utils.validateData(
+                    packet.getChainData().toString(),
+                    packet.getSkinData().toString()
+            );
 
             player = playerManager.addBedrockPlayer(session, extraData);
 
@@ -93,7 +95,7 @@ public class PacketHandler implements BedrockPacketHandler {
 
             ResourcePacksInfoPacket info = new ResourcePacksInfoPacket();
             session.sendPacket(info);
-        } catch (AssertionError | IllegalStateException error) {
+        } catch (AssertionError | Exception error) {
             session.disconnect("disconnect.loginFailed");
         }
         return true;
