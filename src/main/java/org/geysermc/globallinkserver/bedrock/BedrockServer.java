@@ -29,9 +29,9 @@ import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
 import com.nukkitx.protocol.bedrock.BedrockPong;
 import com.nukkitx.protocol.bedrock.BedrockServerEventHandler;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
-import com.nukkitx.protocol.bedrock.v428.Bedrock_v428;
 import lombok.RequiredArgsConstructor;
 import org.geysermc.globallinkserver.Server;
+import org.geysermc.globallinkserver.bedrock.util.BedrockVersionUtils;
 import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
@@ -65,7 +65,7 @@ public class BedrockServer implements Server {
         pong.setGameType("Survival");
         pong.setIpv4Port(config.getBedrockPort());
 
-        BedrockPacketCodec codec = Bedrock_v428.V428_CODEC;
+        BedrockPacketCodec codec = BedrockVersionUtils.LATEST_CODEC;
         pong.setProtocolVersion(codec.getProtocolVersion());
         pong.setVersion(codec.getMinecraftVersion());
 
