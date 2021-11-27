@@ -17,8 +17,8 @@
   <dependencies>
     <dependency>
       <groupId>com.github.CloudburstMC.Protocol</groupId>
-      <artifactId>bedrock-v471</artifactId>
-      <version>b71f1c9</version>
+      <artifactId>bedrock-v475</artifactId>
+      <version>c22aa595</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -29,13 +29,7 @@
     <dependency>
       <groupId>com.github.GeyserMC</groupId>
       <artifactId>MCProtocolLib</artifactId>
-      <version>6e318f5</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.github.GeyserMC</groupId>
-      <artifactId>PacketLib</artifactId>
-      <version>6e5dea9</version>
+      <version>f7f84e7</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
