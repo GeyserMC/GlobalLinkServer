@@ -39,9 +39,9 @@ import com.github.steveice10.mc.protocol.data.status.PlayerInfo;
 import com.github.steveice10.mc.protocol.data.status.ServerStatusInfo;
 import com.github.steveice10.mc.protocol.data.status.VersionInfo;
 import com.github.steveice10.mc.protocol.data.status.handler.ServerInfoBuilder;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerDeclareCommandsPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerJoinGamePacket;
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerPositionRotationPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundCommandsPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
 import com.github.steveice10.packetlib.Server;
 import com.github.steveice10.packetlib.event.server.ServerAdapter;
 import com.github.steveice10.packetlib.event.server.ServerClosedEvent;
@@ -54,13 +54,15 @@ import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
 
+import static com.github.steveice10.mc.protocol.codec.MinecraftCodec.CODEC;
+
 @RequiredArgsConstructor
 public class JavaServer implements org.geysermc.globallinkserver.Server {
     private final PlayerManager playerManager;
     private final LinkManager linkManager;
 
     private final ServerStatusInfo pong = new ServerStatusInfo(
-            new VersionInfo(MinecraftConstants.GAME_VERSION, MinecraftConstants.PROTOCOL_VERSION),
+            new VersionInfo(CODEC.getMinecraftVersion(), CODEC.getProtocolVersion()),
             new PlayerInfo(1, 0, new GameProfile[0]),
             Component.text("Global Link Server"),
             null);
@@ -73,7 +75,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
             return false;
         }
 
-        server = new TcpServer(config.getBindIp(), config.getJavaPort(), MinecraftProtocol.class);
+        server = new TcpServer(config.getBindIp(), config.getJavaPort(), MinecraftProtocol::new);
 
         server.setGlobalFlag(MinecraftConstants.SESSION_SERVICE_KEY, new SessionService());
         server.setGlobalFlag(MinecraftConstants.VERIFY_USERS_KEY, true);
@@ -82,7 +84,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
         server.setGlobalFlag(MinecraftConstants.SERVER_LOGIN_HANDLER_KEY,
                 (ServerLoginHandler) session -> {
 
-                    session.send(new ServerDeclareCommandsPacket(
+                    session.send(new ClientboundCommandsPacket(
                             new CommandNode[]{
                                     new CommandNode(CommandType.ROOT, true, new int[]{1, 3}, -1, null, null, null, null),
                                     new CommandNode(CommandType.LITERAL, true, new int[]{2}, -1, "linkaccount", null, null, null),
@@ -92,7 +94,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             0
                     ));
 
-                    session.send(new ServerJoinGamePacket(
+                    session.send(new ClientboundLoginPacket(
                             0,
                             false,
                             GameMode.SPECTATOR,
@@ -105,6 +107,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             100,
                             1,
                             0,
+                            0,
                             false,
                             false,
                             false,
@@ -113,7 +116,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
 
                     // Just send the position without sending chunks
                     // This loads the player into an empty world and stops them from moving
-                    session.send(new ServerPlayerPositionRotationPacket(0, 64, 0, 0, 0, 0, false));
+                    session.send(new ClientboundPlayerPositionPacket(0, 64, 0, 0, 0, 0, false));
 
                     // Manually call the connect event
                     session.callEvent(new ConnectedEvent(session));

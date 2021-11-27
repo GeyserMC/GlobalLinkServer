@@ -27,12 +27,12 @@ package org.geysermc.globallinkserver.java;
 
 import com.github.steveice10.mc.auth.data.GameProfile;
 import com.github.steveice10.mc.protocol.MinecraftConstants;
-import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.serverbound.ServerboundChatPacket;
 import com.github.steveice10.packetlib.Session;
 import com.github.steveice10.packetlib.event.session.ConnectedEvent;
 import com.github.steveice10.packetlib.event.session.DisconnectedEvent;
-import com.github.steveice10.packetlib.event.session.PacketReceivedEvent;
 import com.github.steveice10.packetlib.event.session.SessionAdapter;
+import com.github.steveice10.packetlib.packet.Packet;
 import lombok.RequiredArgsConstructor;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
@@ -48,10 +48,10 @@ public class PacketHandler extends SessionAdapter {
     private long lastCommand;
 
     @Override
-    public void packetReceived(PacketReceivedEvent event) {
+    public void packetReceived(Session session, Packet packet) {
         try {
-            if (event.getPacket() instanceof ClientChatPacket) {
-                String message = ((ClientChatPacket) event.getPacket()).getMessage();
+            if (packet instanceof ServerboundChatPacket) {
+                String message = ((ServerboundChatPacket) packet).getMessage();
 
                 if (message.startsWith("/")) {
                     long now = System.currentTimeMillis();

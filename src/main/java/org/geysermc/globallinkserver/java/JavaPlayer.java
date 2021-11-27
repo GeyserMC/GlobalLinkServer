@@ -26,8 +26,8 @@
 package org.geysermc.globallinkserver.java;
 
 import com.github.steveice10.mc.auth.data.GameProfile;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerChatPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerDisconnectPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundChatPacket;
+import com.github.steveice10.mc.protocol.packet.login.clientbound.ClientboundLoginDisconnectPacket;
 import com.github.steveice10.packetlib.Session;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -45,12 +45,12 @@ public class JavaPlayer implements Player {
 
     @Override
     public void sendMessage(String message) {
-        session.send(new ServerChatPacket(jsonFormatMessage(message)));
+        session.send(new ClientboundChatPacket(jsonFormatMessage(message)));
     }
 
     @Override
     public void disconnect(String reason) {
-        session.send(new ServerDisconnectPacket(jsonFormatMessage(reason)));
+        session.send(new ClientboundLoginDisconnectPacket(jsonFormatMessage(reason)));
         session.disconnect(reason);
     }
 
