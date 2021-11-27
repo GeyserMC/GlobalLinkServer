@@ -20,6 +20,12 @@
       <artifactId>bedrock-v475</artifactId>
       <version>c22aa595</version>
       <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>io.netty</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.nukkitx.fastutil</groupId>
