@@ -29,7 +29,13 @@
     <dependency>
       <groupId>com.github.GeyserMC</groupId>
       <artifactId>MCProtocolLib</artifactId>
-      <version>f7f84e7</version>
+      <version>6e318f5</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.GeyserMC</groupId>
+      <artifactId>PacketLib</artifactId>
+      <version>6e5dea9</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
