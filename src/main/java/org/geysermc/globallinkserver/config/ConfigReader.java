@@ -57,7 +57,7 @@ public class ConfigReader {
 
     private static void createConfig() {
         try {
-            Files.copy(ConfigReader.class.getResourceAsStream("config.json"), CONFIG_PATH);
+            Files.copy(ConfigReader.class.getResourceAsStream("/config.json"), CONFIG_PATH);
         } catch (IOException exception) {
             throw new RuntimeException("Failed to copy config", exception);
         }
