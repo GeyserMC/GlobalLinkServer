@@ -58,7 +58,7 @@ public class TagManager {
         overworldTag.put(new ByteTag("piglin_safe", (byte) 0));
         overworldTag.put(new ByteTag("natural", (byte) 0));
         overworldTag.put(new FloatTag("ambient_light", 0f));
-        overworldTag.put(new StringTag("infiniburn", "minecraft:infiniburn_end"));
+        overworldTag.put(new StringTag("infiniburn", "#minecraft:infiniburn_end"));
         overworldTag.put(new ByteTag("respawn_anchor_works", (byte) 0));
         overworldTag.put(new ByteTag("has_skylight", (byte) 0));
         overworldTag.put(new ByteTag("bed_works", (byte) 0));
