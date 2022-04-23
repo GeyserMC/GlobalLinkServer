@@ -25,17 +25,23 @@
 
 package org.geysermc.globallinkserver.util;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.geysermc.globallinkserver.java.JavaPlayer;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.link.TempLink;
 import org.geysermc.globallinkserver.player.Player;
 import org.geysermc.globallinkserver.player.PlayerManager;
 
+import java.util.concurrent.CompletableFuture;
+
 public class CommandUtils {
     public static void handleCommand(
             LinkManager linkManager,
             PlayerManager playerManager,
-            Player player,
+            JavaPlayer player,
             String message) {
 
         String[] args = message.split(" ");
@@ -49,53 +55,19 @@ public class CommandUtils {
                     return;
                 }
 
-                TempLink tempLink = linkManager.getTempLink(linkId);
-
-                if (tempLink == null) {
-                    player.sendMessage("&cCould not find the provided link. Is it expired?");
-                    return;
+                String result = linkAccount(player, linkManager, playerManager, linkId);
+                if (result != null) {
+                    player.sendMessage(result);
                 }
-
-                if (player instanceof JavaPlayer) {
-                    tempLink.setJavaId(player.getUniqueId());
-                    tempLink.setJavaUsername(player.getUsername());
-                } else {
-                    tempLink.setBedrockId(player.getUniqueId());
-                }
-
-                if (tempLink.getJavaId() == null || tempLink.getBedrockId() == null) {
-                    player.sendMessage("&cWelp.. You can only link a Java account to a Bedrock account. Try to start the linking process again.");
-                    return;
-                }
-
-                linkManager.finaliseLink(tempLink).whenComplete((result, error) -> {
-                    if (error != null || !result) {
-                        if (error != null) {
-                            error.printStackTrace();
-                        }
-                        System.out.println(result);
-                        player.sendMessage(
-                                "&cAn unknown error happened while linking your account. Try it again later");
-                        return;
-                    }
-
-                    playerManager.kickPlayers(tempLink.getJavaId(), tempLink.getBedrockId(),
-                            "&aYou are now successfully linked! :)");
-                });
                 return;
             }
 
             if (args.length == 1) {
-                if (player.getLinkId() != 0) {
-                    linkManager.removeTempLink(player.getLinkId());
-                }
-
-                String code = String.format("%04d", linkManager.createTempLink(player));
-
-                String otherPlatform = player instanceof JavaPlayer ? "Bedrock" : "Java";
-
-                player.sendMessage("&aPlease join on " + otherPlatform +
-                        " and run `&9/linkaccount &3" + code + "&a`");
+                String code = startAccountLink(player, linkManager);
+                player.sendMessage(Component.text("Please join on Bedrock and continue the linking process with the following code: ", NamedTextColor.GREEN)
+                        .append(Component.text(code, NamedTextColor.DARK_AQUA)
+                                .clickEvent(ClickEvent.copyToClipboard(code))
+                                .hoverEvent(HoverEvent.showText(Component.text("Click to copy to clipboard")))));
                 return;
             }
 
@@ -106,19 +78,13 @@ public class CommandUtils {
 
         if (args[0].equals("/unlinkaccount")) {
             if (args.length == 1) {
-                linkManager.unlinkAccount(player).whenComplete((result, error) -> {
-                    if (error != null) {
-                        error.printStackTrace();
-                        System.out.println(result);
-                        player.sendMessage(
-                                "&cAn unknown error happened while unlinking your account. Try it again later");
-                        return;
-                    }
-
-                    if (result) {
-                        player.sendMessage("&aYou are successfully unlinked");
-                    } else {
-                        player.sendMessage("&eYou aren't linked to any account");
+                unlinkAccount(player, linkManager).whenComplete((result, error) -> {
+                    if (error == null) {
+                        if (result) {
+                            player.sendMessage("&aYou are successfully unlinked");
+                        } else {
+                            player.sendMessage("&eYou aren't linked to any account");
+                        }
                     }
                 });
                 return;
@@ -129,5 +95,68 @@ public class CommandUtils {
         }
 
         player.sendMessage("&cUnknown command");
+    }
+
+    /**
+     * @return error string if something goes wrong.
+     */
+    public static String linkAccount(Player player, LinkManager linkManager, PlayerManager playerManager, int linkId) {
+        TempLink tempLink = linkManager.getTempLink(linkId);
+
+        if (tempLink == null) {
+            return player.formatMessage("&cCould not find the provided link. Is it expired?");
+        }
+
+        if (player instanceof JavaPlayer) {
+            tempLink.setJavaId(player.getUniqueId());
+            tempLink.setJavaUsername(player.getUsername());
+        } else {
+            tempLink.setBedrockId(player.getUniqueId());
+        }
+
+        if (tempLink.getJavaId() == null || tempLink.getBedrockId() == null) {
+            return player.formatMessage(
+                    "&cWelp.. You can only link a Java account to a Bedrock account. " +
+                            "Try to start the linking process again."
+            );
+        }
+
+        linkManager.finaliseLink(tempLink).whenComplete((result, error) -> {
+            if (error != null || !result) {
+                if (error != null) {
+                    error.printStackTrace();
+                }
+                System.out.println(result);
+                player.sendMessage("&cAn unknown error happened while linking your account. Try it again later");
+                return;
+            }
+
+            playerManager.kickPlayers(tempLink.getJavaId(), tempLink.getBedrockId(),
+                    "&aYou are now successfully linked! :)");
+        });
+
+        return null;
+    }
+
+    /**
+     * @return temp code.
+     */
+    public static String startAccountLink(Player player, LinkManager linkManager) {
+        if (player.getLinkId() != 0) {
+            linkManager.removeTempLink(player.getLinkId());
+        }
+
+        return String.format("%04d", linkManager.createTempLink(player));
+    }
+
+    public static CompletableFuture<Boolean> unlinkAccount(Player player, LinkManager linkManager) {
+        return linkManager.unlinkAccount(player).whenComplete((result, error) -> {
+            if (error != null) {
+                error.printStackTrace();
+                System.out.println(result);
+                player.sendMessage(
+                        "&cAn unknown error happened while unlinking your account. Try it again later");
+            }
+        });
     }
 }

@@ -32,6 +32,7 @@ import com.github.steveice10.packetlib.Session;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.kyori.adventure.text.Component;
 import org.geysermc.globallinkserver.player.Player;
 
 import java.util.UUID;
@@ -46,6 +47,10 @@ public class JavaPlayer implements Player {
     @Override
     public void sendMessage(String message) {
         session.send(new ClientboundChatPacket(jsonFormatMessage(message)));
+    }
+
+    public void sendMessage(Component component) {
+        session.send(new ClientboundChatPacket(component));
     }
 
     @Override

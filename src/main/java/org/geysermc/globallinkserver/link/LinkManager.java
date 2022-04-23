@@ -37,10 +37,12 @@ import org.mariadb.jdbc.MariaDbPoolDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
@@ -110,6 +112,41 @@ public class LinkManager {
 
     public void removeTempLink(int linkId) {
         tempLinks.remove(linkId);
+    }
+
+    public CompletableFuture<String> findLinkForBedrock(UUID bedrockId) {
+        return CompletableFuture.supplyAsync(() -> {
+            try (Connection connection = dataSource.getConnection()) {
+                try (PreparedStatement query = connection.prepareStatement(
+                        "SELECT bedrock_id, java_id, java_name FROM links WHERE bedrock_id = ?")) {
+                    query.setLong(1, bedrockId.getLeastSignificantBits());
+                    try (ResultSet result = query.executeQuery()) {
+                        if (!result.next()) {
+                            return null;
+                        }
+                        return result.getString("java_name");
+                    }
+                }
+            } catch (SQLException exception) {
+                throw new CompletionException("Error while linking player", exception);
+            }
+        });
+    }
+
+    public CompletableFuture<Boolean> isJavaPlayerLinked(UUID javaId) {
+        return CompletableFuture.supplyAsync(() -> {
+            try (Connection connection = dataSource.getConnection()) {
+                try (PreparedStatement query = connection.prepareStatement(
+                        "SELECT bedrock_id, java_id, java_name FROM links WHERE java_id = ?")) {
+                    query.setString(1, javaId.toString());
+                    try (ResultSet result = query.executeQuery()) {
+                        return result.next();
+                    }
+                }
+            } catch (SQLException exception) {
+                throw new CompletionException("Error while linking player", exception);
+            }
+        });
     }
 
     public CompletableFuture<Boolean> finaliseLink(TempLink tempLink) {

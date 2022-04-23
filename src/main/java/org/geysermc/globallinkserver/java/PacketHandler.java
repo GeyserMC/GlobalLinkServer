@@ -34,6 +34,10 @@ import com.github.steveice10.packetlib.event.session.DisconnectedEvent;
 import com.github.steveice10.packetlib.event.session.SessionAdapter;
 import com.github.steveice10.packetlib.packet.Packet;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
 import org.geysermc.globallinkserver.util.CommandUtils;
@@ -76,7 +80,28 @@ public class PacketHandler extends SessionAdapter {
             GameProfile profile = event.getSession().getFlag(MinecraftConstants.PROFILE_KEY);
 
             player = playerManager.addJavaPlayer(session, profile);
-            player.sendJoinMessages();
+            linkManager.isJavaPlayerLinked(player.getUniqueId()).whenComplete((linked, error) -> {
+                if (error != null) {
+                    error.printStackTrace();
+                    return;
+                }
+                if (linked) {
+                    player.sendMessage(Component.text("There is a Bedrock player already linked to this account. Click ")
+                            .append(Component.text("here", NamedTextColor.DARK_PURPLE)
+                                    .clickEvent(ClickEvent.runCommand("/unlinkaccount")))
+                            .append(Component.text(" or run /unlinkaccount to unlink your account.")));
+                } else {
+                    player.sendMessage(Component.text("To start the linking process, click ")
+                            .append(Component.text("here", NamedTextColor.DARK_PURPLE)
+                                    .clickEvent(ClickEvent.runCommand("/linkaccount")))
+                            .append(Component.text(" or run /linkaccount.")));
+                    player.sendMessage(Component.text("To finish the linking process from Bedrock, run ")
+                            .append(Component.join(JoinConfiguration.noSeparators(),
+                                    Component.text("/linkaccount ", NamedTextColor.DARK_BLUE),
+                                    Component.text("<code>", NamedTextColor.AQUA))
+                                    .clickEvent(ClickEvent.suggestCommand("/linkaccount "))));
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -31,6 +31,13 @@ import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
 import com.nukkitx.protocol.bedrock.packet.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.geysermc.cumulus.CustomForm;
+import org.geysermc.cumulus.Form;
+import org.geysermc.cumulus.SimpleForm;
+import org.geysermc.cumulus.response.CustomFormResponse;
+import org.geysermc.cumulus.response.SimpleFormResponse;
 import org.geysermc.globallinkserver.bedrock.util.BedrockVersionUtils;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
@@ -38,12 +45,31 @@ import org.geysermc.globallinkserver.util.CommandUtils;
 import org.geysermc.globallinkserver.util.Utils;
 
 public class PacketHandler implements BedrockPacketHandler {
+    private static final int LINK_ACCOUNT_FORM_ID = 1;
+    private static final int UNLINK_ACCOUNT_FORM_ID = 2;
+    private static final int LINK_ACCOUNT_SHOW_CODE = 3;
+    private static final int LINK_ACCOUNT_ENTER_CODE = 4;
+
+    private static final SimpleForm LINK_ACCOUNT_FORM = SimpleForm.builder()
+            .title("Global Link Server")
+            .content("Welcome to the Global Link Server.")
+            .button("Start link process")
+            .button("Continue link process from Java Edition")
+            .button("Disconnect")
+            .build();
+    private static final CustomForm LINK_ACCOUNT_ENTER_CODE_FORM = CustomForm.builder()
+            .title("Global Link Server")
+            .input("Enter the code you received from Java Edition:", "0000")
+            .build();
+
     private final BedrockServerSession session;
     private final PlayerManager playerManager;
     private final LinkManager linkManager;
 
     private BedrockPlayer player;
-    private long lastCommand;
+    private boolean loggedIn = false;
+
+    private final Int2ObjectMap<Form> forms = new Int2ObjectOpenHashMap<>(2);
 
     public PacketHandler(
             BedrockServerSession session,
@@ -60,6 +86,14 @@ public class PacketHandler implements BedrockPacketHandler {
         if (player != null) {
             playerManager.removeBedrockPlayer(player);
         }
+    }
+
+    private void sendForm(int formId, Form form) {
+        ModalFormRequestPacket packet = new ModalFormRequestPacket();
+        packet.setFormId(formId);
+        packet.setFormData(form.getJsonData());
+        session.sendPacket(packet);
+        forms.put(formId, form);
     }
 
     @Override
@@ -123,23 +157,82 @@ public class PacketHandler implements BedrockPacketHandler {
 
     @Override
     public boolean handle(SetLocalPlayerAsInitializedPacket packet) {
-        player.sendJoinMessages();
+        if (loggedIn) {
+            return true;
+        }
+        loggedIn = true;
+        linkManager.findLinkForBedrock(player.getUniqueId()).whenComplete((result, error) -> {
+            if (result == null) {
+                sendForm(LINK_ACCOUNT_FORM_ID, LINK_ACCOUNT_FORM);
+                return;
+            }
+
+            sendForm(UNLINK_ACCOUNT_FORM_ID, SimpleForm.builder().title("Global Link Server")
+                    .content("You are already linked to the Java player " + result + ".")
+                    .button("Unlink Account")
+                    .button("Disconnect")
+                    .build());
+        });
         return true;
     }
 
     @Override
-    public boolean handle(CommandRequestPacket packet) {
-        String message = packet.getCommand();
-        if (message.startsWith("/")) {
-            long now = System.currentTimeMillis();
-            if (now - lastCommand < 4_000) {
-                player.sendMessage("&cYou're sending commands too fast");
-                return true;
+    public boolean handle(ModalFormResponsePacket packet) {
+        int formId = packet.getFormId();
+        Form form = forms.remove(formId);
+        if (form == null) {
+            return true;
+        }
+
+        switch (formId) {
+            case LINK_ACCOUNT_FORM_ID: {
+                SimpleFormResponse response = LINK_ACCOUNT_FORM.parseResponse(packet.getFormData());
+                if (!response.isCorrect()) {
+                    player.disconnect("Closed"); //todo
+                    break;
+                }
+
+                int buttonId = response.getClickedButtonId();
+                if (buttonId == 0) {
+                    String code = CommandUtils.startAccountLink(player, linkManager);
+                    sendForm(LINK_ACCOUNT_SHOW_CODE, SimpleForm.builder().title("Global Link Server")
+                            .content(player.formatMessage("&aPlease join on Java and run `&9/linkaccount &3" + code + "&a`"))
+                            .build());
+                } else if (buttonId == 1) {
+                    sendForm(LINK_ACCOUNT_ENTER_CODE, LINK_ACCOUNT_ENTER_CODE_FORM);
+                } else {
+                    player.disconnect("Closed");
+                }
+                break;
             }
-            lastCommand = now;
-            CommandUtils.handleCommand(linkManager, playerManager, player, message);
-        } else {
-            player.sendMessage("&7The darkness doesn't know how to respond to your message");
+            case LINK_ACCOUNT_ENTER_CODE: {
+                CustomFormResponse response = LINK_ACCOUNT_ENTER_CODE_FORM.parseResponse(packet.getFormData());
+                if (!response.isCorrect()) {
+                    // Send them back
+                    sendForm(LINK_ACCOUNT_FORM_ID, LINK_ACCOUNT_FORM);
+                    break;
+                }
+                int code = Utils.parseInt(response.getInput(0));
+                if (code >= 0) {
+                    String message = CommandUtils.linkAccount(player, linkManager, playerManager, code);
+                    if (message != null) {
+                        // TODO send form
+                    }
+                }
+            }
+            case UNLINK_ACCOUNT_FORM_ID: {
+                SimpleFormResponse response = (SimpleFormResponse) form.parseResponse(packet.getFormData());
+                if (!response.isCorrect()) {
+                    player.disconnect("Closed"); //todo
+                    break;
+                }
+
+                if (response.getClickedButtonId() == 0) {
+                    CommandUtils.unlinkAccount(player, linkManager);
+                }
+                player.disconnect("Closed");
+                break;
+            }
         }
         return true;
     }
