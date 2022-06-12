@@ -29,6 +29,7 @@ import com.google.gson.JsonObject;
 import com.nukkitx.math.vector.Vector2f;
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.math.vector.Vector3i;
+import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.data.*;
 import com.nukkitx.protocol.bedrock.packet.*;
@@ -84,6 +85,7 @@ public class BedrockPlayer implements Player {
         startGamePacket.setPlayerGameType(GameType.CREATIVE);
         startGamePacket.setPlayerPosition(Vector3f.from(0, 64 + 2, 0));
         startGamePacket.setRotation(Vector2f.ONE);
+        startGamePacket.setPlayerPropertyData(NbtMap.EMPTY);
 
         startGamePacket.setSeed(-1);
         startGamePacket.setDimensionId(2);
@@ -120,6 +122,7 @@ public class BedrockPlayer implements Player {
         startGamePacket.setLevelId("");
         startGamePacket.setLevelName("GlobalLinkServer");
         startGamePacket.setPremiumWorldTemplateId("");
+        startGamePacket.setWorldTemplateId(new UUID(0, 0));
         startGamePacket.setCurrentTick(0);
         startGamePacket.setEnchantmentSeed(0);
         startGamePacket.setMultiplayerCorrelationId("");
