@@ -27,7 +27,7 @@ package org.geysermc.globallinkserver.java;
 
 import com.github.steveice10.mc.auth.data.GameProfile;
 import com.github.steveice10.mc.protocol.MinecraftConstants;
-import com.github.steveice10.mc.protocol.packet.ingame.serverbound.ServerboundChatPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.serverbound.ServerboundChatCommandPacket;
 import com.github.steveice10.packetlib.Session;
 import com.github.steveice10.packetlib.event.session.ConnectedEvent;
 import com.github.steveice10.packetlib.event.session.DisconnectedEvent;
@@ -50,20 +50,15 @@ public class PacketHandler extends SessionAdapter {
     @Override
     public void packetReceived(Session session, Packet packet) {
         try {
-            if (packet instanceof ServerboundChatPacket) {
-                String message = ((ServerboundChatPacket) packet).getMessage();
-
-                if (message.startsWith("/")) {
-                    long now = System.currentTimeMillis();
-                    if (now - lastCommand < 4_000) {
-                        player.sendMessage("&cYou're sending commands too fast");
-                        return;
-                    }
-                    lastCommand = now;
-                    CommandUtils.handleCommand(linkManager, playerManager, player, message);
-                } else {
-                    player.sendMessage("&7The darkness doesn't know how to respond to your message");
+            if (packet instanceof ServerboundChatCommandPacket) {
+                long now = System.currentTimeMillis();
+                if (now - lastCommand < 4_000) {
+                    player.sendMessage("&cYou're sending commands too fast");
+                    return;
                 }
+                lastCommand = now;
+                String message = "/" + ((ServerboundChatCommandPacket) packet).getCommand();
+                CommandUtils.handleCommand(linkManager, playerManager, player, message);
             }
         } catch (Exception e) {
             e.printStackTrace();

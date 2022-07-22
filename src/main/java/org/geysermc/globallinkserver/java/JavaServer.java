@@ -137,7 +137,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                     session.callEvent(new ConnectedEvent(session));
                 });
         server.setGlobalFlag(MinecraftConstants.SERVER_COMPRESSION_THRESHOLD, 256); // default
-        //server.setGlobalFlag(MinecraftConstants.VERIFY_USERS_KEY, false); // todo: this needs to be removed
+        server.setGlobalFlag(MinecraftConstants.VERIFY_USERS_KEY, false); // todo: this needs to be removed
 
         server.addListener(new ServerAdapter() {
             @Override
