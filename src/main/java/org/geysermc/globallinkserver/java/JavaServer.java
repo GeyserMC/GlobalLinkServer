@@ -35,8 +35,6 @@ import com.github.steveice10.mc.protocol.data.game.command.CommandParser;
 import com.github.steveice10.mc.protocol.data.game.command.CommandType;
 import com.github.steveice10.mc.protocol.data.game.command.properties.IntegerProperties;
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
-import com.github.steveice10.mc.protocol.data.game.level.LightUpdateData;
-import com.github.steveice10.mc.protocol.data.game.level.block.BlockEntityInfo;
 import com.github.steveice10.mc.protocol.data.status.PlayerInfo;
 import com.github.steveice10.mc.protocol.data.status.ServerStatusInfo;
 import com.github.steveice10.mc.protocol.data.status.VersionInfo;
@@ -45,8 +43,6 @@ import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundCo
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerAbilitiesPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundLevelChunkWithLightPacket;
-import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.packetlib.Server;
 import com.github.steveice10.packetlib.event.server.ServerAdapter;
 import com.github.steveice10.packetlib.event.server.ServerClosedEvent;
@@ -59,9 +55,6 @@ import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-
 import static com.github.steveice10.mc.protocol.codec.MinecraftCodec.CODEC;
 
 @RequiredArgsConstructor
@@ -73,7 +66,8 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
             new VersionInfo(CODEC.getMinecraftVersion(), CODEC.getProtocolVersion()),
             new PlayerInfo(1, 0, new GameProfile[0]),
             Component.text("Global Link Server"),
-            null);
+            null,
+            false);
 
     private Server server;
 
@@ -109,8 +103,8 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             GameMode.SPECTATOR,
                             1,
                             new String[]{"minecraft:the_end"},
-                            TagManager.getDimensionTag(),
-                            TagManager.getEndTag(),
+                            TagManager.getDimensionTag(), // todo: convert to RegistryCodec: https://wiki.vg/Protocol#Login_.28play.29
+                            "minecraft:the_end", // valid dimension TYPE name?
                             "minecraft:the_end",
                             100,
                             1,
@@ -119,7 +113,8 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             false,
                             false,
                             false,
-                            false
+                            false,
+                            null
                     ));
 
                     session.send(new ClientboundPlayerAbilitiesPacket(false, false, false, false, 0f, 0f));
