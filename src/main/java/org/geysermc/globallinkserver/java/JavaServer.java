@@ -114,7 +114,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             1,
                             new String[]{"minecraft:the_end"},
                             LOGIN_REGISTRY,
-                            "the_end",
+                            "minecraft:the_end",
                             "minecraft:the_end",
                             100,
                             1,
