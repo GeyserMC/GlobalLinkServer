@@ -38,7 +38,7 @@ import java.util.logging.Logger;
 
 public class GlobalLinkServer {
     private static final Timer TIMER = new Timer();
-    private static final Logger LOGGER = Logger.getGlobal();
+    public static final Logger LOGGER = Logger.getGlobal();
 
     public static void main(String... args) {
         Config config = ConfigReader.readConfig();

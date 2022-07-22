@@ -32,6 +32,7 @@ import com.github.steveice10.packetlib.Session;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.kyori.adventure.audience.MessageType;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.geysermc.globallinkserver.player.Player;
 
@@ -39,7 +40,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 public class JavaPlayer implements Player {
-    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.builder().extractUrls().build();
+    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
 
     private final Session session;
     private final GameProfile profile;
@@ -48,8 +49,7 @@ public class JavaPlayer implements Player {
 
     @Override
     public void sendMessage(String message) {
-        // todo: typeId has to be the index of the BuiltinChatType sent by the server during the login packet
-        session.send(new ClientboundSystemChatPacket(LEGACY_SERIALIZER.deserialize(message), 0));
+        session.send(new ClientboundSystemChatPacket(LEGACY_SERIALIZER.deserialize(message), MessageType.SYSTEM.ordinal()));
     }
 
     @Override
