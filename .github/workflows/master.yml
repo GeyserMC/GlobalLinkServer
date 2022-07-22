@@ -22,7 +22,7 @@ jobs:
           java-version: '8'
           distribution: 'adopt'
       - name: Build with Maven
-        run: ./mvn clean install
+        run: mvn clean install
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3
