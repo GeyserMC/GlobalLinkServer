@@ -5,9 +5,9 @@ name: PR
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
   push:
-    branches: [ "main", "1.19-support" ]
+    branches: [ "master", "1.19-support" ]
 
 jobs:
   build:
