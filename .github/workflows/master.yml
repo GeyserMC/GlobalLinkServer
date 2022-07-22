@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [ "main" ]
   push:
-    branches: [ "main" ]
+    branches: [ "main", "1.19-support" ]
 
 jobs:
   build:
