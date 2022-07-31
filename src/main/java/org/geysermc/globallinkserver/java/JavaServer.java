@@ -67,7 +67,7 @@ import static com.github.steveice10.mc.protocol.codec.MinecraftCodec.CODEC;
 
 @RequiredArgsConstructor
 public class JavaServer implements org.geysermc.globallinkserver.Server {
-    private static final CompoundTag LOGIN_REGISTRY = loadLoginRegistry();
+    private static final CompoundTag REGISTRY_CODEC = loadRegistryCodec();
 
     private final PlayerManager playerManager;
     private final LinkManager linkManager;
@@ -113,7 +113,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             GameMode.SPECTATOR,
                             1,
                             new String[]{"minecraft:the_end"},
-                            LOGIN_REGISTRY,
+                            REGISTRY_CODEC,
                             "minecraft:the_end",
                             "minecraft:the_end",
                             100,
@@ -161,8 +161,8 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
     }
 
     // todo: must be updated for 1.19.1
-    public static CompoundTag loadLoginRegistry() {
-        try (InputStream inputStream = JavaServer.class.getClassLoader().getResourceAsStream("login_registry.nbt");
+    public static CompoundTag loadRegistryCodec() {
+        try (InputStream inputStream = JavaServer.class.getClassLoader().getResourceAsStream("registry_codec.nbt");
              DataInputStream stream = new DataInputStream(new GZIPInputStream(inputStream))) {
             return (CompoundTag) NBTIO.readTag((DataInput) stream);
         } catch (IOException e) {
