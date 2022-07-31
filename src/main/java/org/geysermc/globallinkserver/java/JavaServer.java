@@ -160,7 +160,6 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
         server = null;
     }
 
-    // todo: must be updated for 1.19.1
     public static CompoundTag loadRegistryCodec() {
         try (InputStream inputStream = JavaServer.class.getClassLoader().getResourceAsStream("registry_codec.nbt");
              DataInputStream stream = new DataInputStream(new GZIPInputStream(inputStream))) {
