@@ -32,7 +32,6 @@ import com.github.steveice10.packetlib.Session;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.kyori.adventure.audience.MessageType;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.geysermc.globallinkserver.player.Player;
 
@@ -49,7 +48,7 @@ public class JavaPlayer implements Player {
 
     @Override
     public void sendMessage(String message) {
-        session.send(new ClientboundSystemChatPacket(LEGACY_SERIALIZER.deserialize(message), MessageType.SYSTEM.ordinal()));
+        session.send(new ClientboundSystemChatPacket(LEGACY_SERIALIZER.deserialize(message), false));
     }
 
     @Override

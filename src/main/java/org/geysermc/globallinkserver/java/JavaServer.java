@@ -137,7 +137,6 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                     session.callEvent(new ConnectedEvent(session));
                 });
         server.setGlobalFlag(MinecraftConstants.SERVER_COMPRESSION_THRESHOLD, 256); // default
-        server.setGlobalFlag(MinecraftConstants.VERIFY_USERS_KEY, false); // todo: this needs to be removed
 
         server.addListener(new ServerAdapter() {
             @Override
@@ -161,6 +160,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
         server = null;
     }
 
+    // todo: must be updated for 1.19.1
     public static CompoundTag loadLoginRegistry() {
         try (InputStream inputStream = JavaServer.class.getClassLoader().getResourceAsStream("login_registry.nbt");
              DataInputStream stream = new DataInputStream(new GZIPInputStream(inputStream))) {
