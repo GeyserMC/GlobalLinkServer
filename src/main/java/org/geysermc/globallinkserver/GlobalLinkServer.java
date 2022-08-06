@@ -34,9 +34,11 @@ import org.geysermc.globallinkserver.player.PlayerManager;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Logger;
 
 public class GlobalLinkServer {
     private static final Timer TIMER = new Timer();
+    public static final Logger LOGGER = Logger.getGlobal();
 
     public static void main(String... args) {
         Config config = ConfigReader.readConfig();
@@ -54,5 +56,7 @@ public class GlobalLinkServer {
             }
         };
         TIMER.scheduleAtFixedRate(task, 0L, 60_000L);
+
+        LOGGER.info("Started Global Linking Server");
     }
 }

@@ -35,8 +35,6 @@ import com.github.steveice10.mc.protocol.data.game.command.CommandParser;
 import com.github.steveice10.mc.protocol.data.game.command.CommandType;
 import com.github.steveice10.mc.protocol.data.game.command.properties.IntegerProperties;
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
-import com.github.steveice10.mc.protocol.data.game.level.LightUpdateData;
-import com.github.steveice10.mc.protocol.data.game.level.block.BlockEntityInfo;
 import com.github.steveice10.mc.protocol.data.status.PlayerInfo;
 import com.github.steveice10.mc.protocol.data.status.ServerStatusInfo;
 import com.github.steveice10.mc.protocol.data.status.VersionInfo;
@@ -45,7 +43,7 @@ import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundCo
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerAbilitiesPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundLevelChunkWithLightPacket;
+import com.github.steveice10.opennbt.NBTIO;
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.packetlib.Server;
 import com.github.steveice10.packetlib.event.server.ServerAdapter;
@@ -59,13 +57,18 @@ import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
 
-import java.util.ArrayList;
-import java.util.BitSet;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.zip.GZIPInputStream;
 
 import static com.github.steveice10.mc.protocol.codec.MinecraftCodec.CODEC;
 
 @RequiredArgsConstructor
 public class JavaServer implements org.geysermc.globallinkserver.Server {
+    private static final CompoundTag REGISTRY_CODEC = loadRegistryCodec();
+
     private final PlayerManager playerManager;
     private final LinkManager linkManager;
 
@@ -73,7 +76,8 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
             new VersionInfo(CODEC.getMinecraftVersion(), CODEC.getProtocolVersion()),
             new PlayerInfo(1, 0, new GameProfile[0]),
             Component.text("Global Link Server"),
-            null);
+            null,
+            false);
 
     private Server server;
 
@@ -109,8 +113,8 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             GameMode.SPECTATOR,
                             1,
                             new String[]{"minecraft:the_end"},
-                            TagManager.getDimensionTag(),
-                            TagManager.getEndTag(),
+                            REGISTRY_CODEC,
+                            "minecraft:the_end",
                             "minecraft:the_end",
                             100,
                             1,
@@ -119,7 +123,8 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             false,
                             false,
                             false,
-                            false
+                            false,
+                            null
                     ));
 
                     session.send(new ClientboundPlayerAbilitiesPacket(false, false, false, false, 0f, 0f));
@@ -153,5 +158,15 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
     public void shutdown() {
         server.close();
         server = null;
+    }
+
+    public static CompoundTag loadRegistryCodec() {
+        try (InputStream inputStream = JavaServer.class.getClassLoader().getResourceAsStream("registry_codec.nbt");
+             DataInputStream stream = new DataInputStream(new GZIPInputStream(inputStream))) {
+            return (CompoundTag) NBTIO.readTag((DataInput) stream);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new AssertionError("Unable to load login registry.");
+        }
     }
 }

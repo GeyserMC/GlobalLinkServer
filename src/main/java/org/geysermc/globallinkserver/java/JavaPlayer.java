@@ -26,18 +26,21 @@
 package org.geysermc.globallinkserver.java;
 
 import com.github.steveice10.mc.auth.data.GameProfile;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundChatPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundSystemChatPacket;
 import com.github.steveice10.mc.protocol.packet.login.clientbound.ClientboundLoginDisconnectPacket;
 import com.github.steveice10.packetlib.Session;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.geysermc.globallinkserver.player.Player;
 
 import java.util.UUID;
 
 @RequiredArgsConstructor
 public class JavaPlayer implements Player {
+    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
+
     private final Session session;
     private final GameProfile profile;
     @Getter @Setter
@@ -45,7 +48,7 @@ public class JavaPlayer implements Player {
 
     @Override
     public void sendMessage(String message) {
-        session.send(new ClientboundChatPacket(jsonFormatMessage(message)));
+        session.send(new ClientboundSystemChatPacket(LEGACY_SERIALIZER.deserialize(message), false));
     }
 
     @Override
