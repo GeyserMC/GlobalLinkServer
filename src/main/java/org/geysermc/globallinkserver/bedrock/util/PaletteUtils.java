@@ -29,38 +29,17 @@ import com.nukkitx.nbt.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class is mostly copied from Geyser
  */
 public class PaletteUtils {
-    public static final NbtList<NbtMap> BLOCK_PALETTE;
     public static final NbtMap BIOMES_PALETTE;
     public static final byte[] EMPTY_LEVEL_CHUNK_DATA;
 
     private static final NbtMap EMPTY_TAG = NbtMap.EMPTY;
 
     static {
-        /* Load block palette */
-        // Build the air block entry
-        NbtMapBuilder mainBuilder = NbtMap.builder();
-        mainBuilder.putShort("id", (short) 0);
-
-        NbtMapBuilder blockBuilder = NbtMap.builder();
-        blockBuilder.putString("name", "minecraft:air");
-        blockBuilder.putInt("version", 17825806);
-        blockBuilder.put("states", NbtMap.EMPTY);
-
-        mainBuilder.put("block", blockBuilder.build());
-
-        // Build the block list with the entry
-        List<NbtMap> blocks = new ArrayList<>();
-        blocks.add(mainBuilder.build());
-
-        BLOCK_PALETTE = new NbtList<>(NbtType.COMPOUND, blocks);
-
         /* Load biomes */
         // Build a fake plains biome entry
         NbtMapBuilder plainsBuilder = NbtMap.builder();
