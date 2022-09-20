@@ -16,7 +16,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.github.CloudburstMC.Protocol</groupId>
+      <groupId>com.nukkitx.protocol</groupId>
       <artifactId>bedrock-v554</artifactId>
       <version>2.9.12-SNAPSHOT</version>
       <scope>compile</scope>
