@@ -29,6 +29,7 @@ import com.google.gson.JsonObject;
 import com.nukkitx.network.util.DisconnectReason;
 import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
+import com.nukkitx.protocol.bedrock.data.PacketCompressionAlgorithm;
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
 import com.nukkitx.protocol.bedrock.packet.*;
 import org.geysermc.globallinkserver.bedrock.util.BedrockVersionUtils;
@@ -44,6 +45,11 @@ public class PacketHandler implements BedrockPacketHandler {
 
     private BedrockPlayer player;
     private long lastCommand;
+
+    /**
+     * In Protocol V554 and above, RequestNetworkSettingsPacket is sent before LoginPacket.
+     */
+    private boolean loginV554 = false;
 
     public PacketHandler(
             BedrockServerSession session,
@@ -62,24 +68,54 @@ public class PacketHandler implements BedrockPacketHandler {
         }
     }
 
-    @Override
-    public boolean handle(LoginPacket packet) {
-        BedrockPacketCodec packetCodec =
-                BedrockVersionUtils.getBedrockCodec(packet.getProtocolVersion());
-
+    private boolean setCorrectCodec(int protocolVersion) {
+        BedrockPacketCodec packetCodec = BedrockVersionUtils.getBedrockCodec(protocolVersion);
         if (packetCodec == null) {
+            // Protocol version is not supported
             PlayStatusPacket status = new PlayStatusPacket();
-            if (packet.getProtocolVersion() > BedrockVersionUtils.getLatestProtocolVersion()) {
+            if (protocolVersion > BedrockVersionUtils.getLatestProtocolVersion()) {
                 status.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_SERVER_OLD);
             } else {
                 status.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_CLIENT_OLD);
             }
-            session.sendPacket(status);
+
+            session.sendPacketImmediately(status);
             session.disconnect();
-            return true;
+            return false;
         }
 
         session.setPacketCodec(packetCodec);
+        return true;
+    }
+
+    @Override
+    public boolean handle(RequestNetworkSettingsPacket packet) {
+        if (setCorrectCodec(packet.getProtocolVersion())) {
+            loginV554 = true;
+        } else {
+            return true; // Unsupported version, client has been disconnected
+        }
+
+        // New since 1.19.30 - sent before login packet
+        PacketCompressionAlgorithm algorithm = PacketCompressionAlgorithm.ZLIB;
+
+        NetworkSettingsPacket responsePacket = new NetworkSettingsPacket();
+        responsePacket.setCompressionAlgorithm(algorithm);
+        responsePacket.setCompressionThreshold(512);
+        session.sendPacketImmediately(responsePacket);
+
+        session.setCompression(algorithm);
+        return true;
+    }
+
+    @Override
+    public boolean handle(LoginPacket packet) {
+        if (!loginV554) {
+            // This is the first packet and compression has not been set yet
+            if (!setCorrectCodec(packet.getProtocolVersion())) {
+                return true;
+            }
+        }
 
         try {
             JsonObject extraData = Utils.validateData(
