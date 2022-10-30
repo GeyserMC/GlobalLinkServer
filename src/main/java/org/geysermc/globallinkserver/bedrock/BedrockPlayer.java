@@ -26,14 +26,15 @@
 package org.geysermc.globallinkserver.bedrock;
 
 import com.google.gson.JsonObject;
-import com.nukkitx.math.vector.Vector2f;
-import com.nukkitx.math.vector.Vector3f;
-import com.nukkitx.math.vector.Vector3i;
 import com.nukkitx.nbt.NbtMap;
-import com.nukkitx.protocol.bedrock.BedrockServerSession;
-import com.nukkitx.protocol.bedrock.data.*;
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
-import com.nukkitx.protocol.bedrock.packet.*;
+import io.netty.buffer.Unpooled;
+import org.cloudburstmc.math.vector.Vector2f;
+import org.cloudburstmc.math.vector.Vector3f;
+import org.cloudburstmc.math.vector.Vector3i;
+import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
+import org.cloudburstmc.protocol.bedrock.data.*;
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
+import org.cloudburstmc.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.geysermc.globallinkserver.bedrock.util.PaletteUtils;
@@ -130,14 +131,9 @@ public class BedrockPlayer implements Player {
         startGamePacket.setMultiplayerCorrelationId("");
         startGamePacket.setVanillaVersion("*");
 
-        // not needed after 1.16.200
         startGamePacket.setAuthoritativeMovementMode(AuthoritativeMovementMode.CLIENT);
-
-        SyncedPlayerMovementSettings settings = new SyncedPlayerMovementSettings();
-        settings.setMovementMode(AuthoritativeMovementMode.CLIENT);
-        settings.setRewindHistorySize(0);
-        settings.setServerAuthoritativeBlockBreaking(false);
-        startGamePacket.setPlayerMovementSettings(settings);
+        startGamePacket.setRewindHistorySize(0);
+        startGamePacket.setServerAuthoritativeBlockBreaking(false);
 
         session.sendPacket(startGamePacket);
 
@@ -151,7 +147,7 @@ public class BedrockPlayer implements Player {
         data.setChunkX(0);
         data.setChunkZ(0);
         data.setSubChunksLength(0);
-        data.setData(PaletteUtils.EMPTY_LEVEL_CHUNK_DATA);
+        data.setData(Unpooled.wrappedBuffer(PaletteUtils.EMPTY_LEVEL_CHUNK_DATA));
         data.setCachingEnabled(false);
         session.sendPacket(data);
 

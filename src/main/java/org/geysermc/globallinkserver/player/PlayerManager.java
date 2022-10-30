@@ -28,7 +28,7 @@ package org.geysermc.globallinkserver.player;
 import com.github.steveice10.mc.auth.data.GameProfile;
 import com.github.steveice10.packetlib.Session;
 import com.google.gson.JsonObject;
-import com.nukkitx.protocol.bedrock.BedrockServerSession;
+import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.geysermc.globallinkserver.bedrock.BedrockPlayer;
 import org.geysermc.globallinkserver.java.JavaPlayer;

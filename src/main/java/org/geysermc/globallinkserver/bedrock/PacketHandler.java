@@ -26,12 +26,11 @@
 package org.geysermc.globallinkserver.bedrock;
 
 import com.google.gson.JsonObject;
-import com.nukkitx.network.util.DisconnectReason;
-import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
-import com.nukkitx.protocol.bedrock.BedrockServerSession;
-import com.nukkitx.protocol.bedrock.data.PacketCompressionAlgorithm;
-import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
-import com.nukkitx.protocol.bedrock.packet.*;
+import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
+import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
+import org.cloudburstmc.protocol.bedrock.data.PacketCompressionAlgorithm;
+import org.cloudburstmc.protocol.bedrock.packet.*;
+import org.cloudburstmc.protocol.common.PacketSignal;
 import org.geysermc.globallinkserver.bedrock.util.BedrockVersionUtils;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
@@ -58,18 +57,17 @@ public class PacketHandler implements BedrockPacketHandler {
         this.session = session;
         this.playerManager = playerManager;
         this.linkManager = linkManager;
-
-        session.addDisconnectHandler(this::disconnect);
     }
 
-    public void disconnect(DisconnectReason reason) {
+    @Override
+    public void onDisconnect(String reason) {
         if (player != null) {
             playerManager.removeBedrockPlayer(player);
         }
     }
 
     private boolean setCorrectCodec(int protocolVersion) {
-        BedrockPacketCodec packetCodec = BedrockVersionUtils.getBedrockCodec(protocolVersion);
+        BedrockCodec packetCodec = BedrockVersionUtils.getBedrockCodec(protocolVersion);
         if (packetCodec == null) {
             // Protocol version is not supported
             PlayStatusPacket status = new PlayStatusPacket();
@@ -84,16 +82,16 @@ public class PacketHandler implements BedrockPacketHandler {
             return false;
         }
 
-        session.setPacketCodec(packetCodec);
+        session.setCodec(packetCodec);
         return true;
     }
 
     @Override
-    public boolean handle(RequestNetworkSettingsPacket packet) {
+    public PacketSignal handle(RequestNetworkSettingsPacket packet) {
         if (setCorrectCodec(packet.getProtocolVersion())) {
             loginV554 = true;
         } else {
-            return true; // Unsupported version, client has been disconnected
+            return PacketSignal.HANDLED; // Unsupported version, client has been disconnected
         }
 
         // New since 1.19.30 - sent before login packet
@@ -105,22 +103,22 @@ public class PacketHandler implements BedrockPacketHandler {
         session.sendPacketImmediately(responsePacket);
 
         session.setCompression(algorithm);
-        return true;
+        return PacketSignal.HANDLED;
     }
 
     @Override
-    public boolean handle(LoginPacket packet) {
+    public PacketSignal handle(LoginPacket packet) {
         if (!loginV554) {
             // This is the first packet and compression has not been set yet
             if (!setCorrectCodec(packet.getProtocolVersion())) {
-                return true;
+                return PacketSignal.HANDLED;
             }
         }
 
         try {
             JsonObject extraData = Utils.validateData(
-                    packet.getChainData().toString(),
-                    packet.getSkinData().toString()
+                    packet.getChain(),
+                    packet.getExtra().toString()
             );
 
             player = playerManager.addBedrockPlayer(session, extraData);
@@ -134,11 +132,11 @@ public class PacketHandler implements BedrockPacketHandler {
         } catch (AssertionError | Exception error) {
             session.disconnect("disconnect.loginFailed");
         }
-        return true;
+        return PacketSignal.HANDLED;
     }
 
     @Override
-    public boolean handle(ResourcePackClientResponsePacket packet) {
+    public PacketSignal handle(ResourcePackClientResponsePacket packet) {
         switch (packet.getStatus()) {
             case COMPLETED:
                 player.sendStartGame();
@@ -154,29 +152,29 @@ public class PacketHandler implements BedrockPacketHandler {
                 session.disconnect("disconnectionScreen.resourcePack");
                 break;
         }
-        return true;
+        return PacketSignal.HANDLED;
     }
 
     @Override
-    public boolean handle(SetLocalPlayerAsInitializedPacket packet) {
+    public PacketSignal handle(SetLocalPlayerAsInitializedPacket packet) {
         player.sendJoinMessages();
-        return true;
+        return PacketSignal.HANDLED;
     }
 
     @Override
-    public boolean handle(CommandRequestPacket packet) {
+    public PacketSignal handle(CommandRequestPacket packet) {
         String message = packet.getCommand();
         if (message.startsWith("/")) {
             long now = System.currentTimeMillis();
             if (now - lastCommand < 4_000) {
                 player.sendMessage("&cYou're sending commands too fast");
-                return true;
+            } else {
+                lastCommand = now;
+                CommandUtils.handleCommand(linkManager, playerManager, player, message);
             }
-            lastCommand = now;
-            CommandUtils.handleCommand(linkManager, playerManager, player, message);
         } else {
             player.sendMessage("&7The darkness doesn't know how to respond to your message");
         }
-        return true;
+        return PacketSignal.HANDLED;
     }
 }
