@@ -40,6 +40,7 @@ import org.cloudburstmc.protocol.bedrock.codec.v503.Bedrock_v503;
 import org.cloudburstmc.protocol.bedrock.codec.v527.Bedrock_v527;
 import org.cloudburstmc.protocol.bedrock.codec.v534.Bedrock_v534;
 import org.cloudburstmc.protocol.bedrock.codec.v544.Bedrock_v544;
+import org.cloudburstmc.protocol.bedrock.codec.v545.Bedrock_v545;
 import org.cloudburstmc.protocol.bedrock.codec.v554.Bedrock_v554;
 import org.cloudburstmc.protocol.bedrock.codec.v557.Bedrock_v557;
 
@@ -75,10 +76,7 @@ public class BedrockVersionUtils {
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v527.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v534.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v544.CODEC);
-        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v544.CODEC.toBuilder()
-                .minecraftVersion("1.19.21")
-                .protocolVersion(545)
-                .build());
+        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v545.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v554.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(LATEST_CODEC);
     }
