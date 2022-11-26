@@ -44,7 +44,7 @@ public class PlayerManager {
 
         BedrockPlayer old = bedrockPlayers.put(player.getUsername(), player);
         if (old != null) {
-            old.disconnect("You logged int from somewhere else");
+            old.disconnect("You logged in from somewhere else");
         }
 
         return player;

@@ -37,6 +37,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.cloudburstmc.protocol.common.util.OptionalBoolean;
 import org.geysermc.globallinkserver.bedrock.util.PaletteUtils;
 import org.geysermc.globallinkserver.player.Player;
 import org.geysermc.globallinkserver.util.Utils;
@@ -92,6 +93,9 @@ public class BedrockPlayer implements Player {
         startGamePacket.setSeed(0L);
         startGamePacket.setDimensionId(2);
         startGamePacket.setGeneratorId(1);
+        startGamePacket.setSpawnBiomeType(SpawnBiomeType.DEFAULT);
+        startGamePacket.setCustomBiomeName("");
+        startGamePacket.setForceExperimentalGameplay(OptionalBoolean.of(false));
         startGamePacket.setLevelGameType(GameType.CREATIVE);
         startGamePacket.setDifficulty(0);
         startGamePacket.setDefaultSpawn(Vector3i.ZERO);
@@ -99,6 +103,8 @@ public class BedrockPlayer implements Player {
         startGamePacket.setCurrentTick(-1);
         startGamePacket.setEduEditionOffers(0);
         startGamePacket.setEduFeaturesEnabled(false);
+        startGamePacket.setEducationProductionId("");
+        startGamePacket.setEduSharedUriResource(EduSharedUriResource.EMPTY);
         startGamePacket.setRainLevel(0);
         startGamePacket.setLightningLevel(0);
         startGamePacket.setMultiplayerGame(true);

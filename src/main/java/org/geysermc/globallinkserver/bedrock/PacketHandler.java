@@ -118,10 +118,8 @@ public class PacketHandler implements BedrockPacketHandler {
         try {
             JsonObject extraData = Utils.validateData(
                     packet.getChain(),
-                    packet.getExtra().toString()
+                    packet.getExtra().getParsedString()
             );
-
-            player = playerManager.addBedrockPlayer(session, extraData);
 
             PlayStatusPacket status = new PlayStatusPacket();
             status.setStatus(PlayStatusPacket.Status.LOGIN_SUCCESS);
@@ -129,9 +127,16 @@ public class PacketHandler implements BedrockPacketHandler {
 
             ResourcePacksInfoPacket info = new ResourcePacksInfoPacket();
             session.sendPacket(info);
+
+            player = playerManager.addBedrockPlayer(session, extraData);
         } catch (AssertionError | Exception error) {
             session.disconnect("disconnect.loginFailed");
         }
+        return PacketSignal.HANDLED;
+    }
+
+    @Override
+    public PacketSignal handle(ClientCacheStatusPacket packet) {
         return PacketSignal.HANDLED;
     }
 
