@@ -28,7 +28,6 @@ package org.geysermc.globallinkserver.bedrock;
 import org.cloudburstmc.protocol.bedrock.BedrockPong;
 import lombok.RequiredArgsConstructor;
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
-import org.cloudburstmc.protocol.bedrock.BedrockSession;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
 import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockServerInitializer;
 import org.geysermc.globallinkserver.Server;
@@ -79,8 +78,8 @@ public class BedrockServer implements Server {
     class ServerInitializer extends BedrockServerInitializer {
 
         @Override
-        protected void initSession(BedrockSession session) {
-            session.setPacketHandler(new PacketHandler((BedrockServerSession) session, playerManager, linkManager));
+        protected void initSession(BedrockServerSession session) {
+            session.setPacketHandler(new PacketHandler(session, playerManager, linkManager));
         }
     }
 }

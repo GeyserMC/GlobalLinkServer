@@ -25,7 +25,7 @@
 
 package org.geysermc.globallinkserver.bedrock.util;
 
-import com.nukkitx.nbt.*;
+import org.cloudburstmc.nbt.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -12,15 +12,10 @@
     <outputName>GlobalLinkServer</outputName>
     <maven.compiler.source>8</maven.compiler.source>
     <maven.compiler.target>8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>org.cloudburstmc.protocol</groupId>
-      <artifactId>bedrock-codec</artifactId>
-      <version>3.0.0.Beta1-SNAPSHOT</version>
-      <scope>compile</scope>
-    </dependency>
     <dependency>
       <groupId>org.cloudburstmc.protocol</groupId>
       <artifactId>bedrock-connection</artifactId>
@@ -60,12 +55,12 @@
 
   <repositories>
     <repository>
-      <id>jitpack.io</id>
-      <url>https://jitpack.io</url>
-    </repository>
-    <repository>
       <id>opencollab-main-repo</id>
       <url>https://repo.opencollab.dev/main/</url>
+    </repository>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
     </repository>
   </repositories>
 

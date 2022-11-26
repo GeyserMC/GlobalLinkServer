@@ -26,11 +26,11 @@
 package org.geysermc.globallinkserver.bedrock;
 
 import com.google.gson.JsonObject;
-import com.nukkitx.nbt.NbtMap;
 import io.netty.buffer.Unpooled;
 import org.cloudburstmc.math.vector.Vector2f;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.math.vector.Vector3i;
+import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import org.cloudburstmc.protocol.bedrock.data.*;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;

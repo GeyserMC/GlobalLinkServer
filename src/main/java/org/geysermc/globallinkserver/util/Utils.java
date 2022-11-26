@@ -30,8 +30,8 @@ import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.shaded.json.JSONObject;
 import com.nimbusds.jose.shaded.json.JSONValue;
 import com.nimbusds.jwt.SignedJWT;
-import com.nukkitx.network.util.Preconditions;
 import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils;
+import org.cloudburstmc.protocol.common.util.Preconditions;
 
 import java.net.URI;
 import java.security.interfaces.ECPublicKey;

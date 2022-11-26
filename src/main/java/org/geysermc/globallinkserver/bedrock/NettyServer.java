@@ -25,10 +25,11 @@
 
 package org.geysermc.globallinkserver.bedrock;
 
-import com.nukkitx.network.util.EventLoops;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioDatagramChannel;
 import org.cloudburstmc.netty.channel.raknet.RakChannelFactory;
 import org.cloudburstmc.netty.channel.raknet.config.RakChannelOption;
 import org.cloudburstmc.protocol.bedrock.BedrockPong;
@@ -44,9 +45,9 @@ public class NettyServer {
     private ChannelFuture future;
 
     public NettyServer(Supplier<BedrockPong> ponger, BedrockServerInitializer serverInitializer) {
-        group = EventLoops.newEventLoopGroup(1);
+        group = new NioEventLoopGroup();
         bootstrap = new ServerBootstrap()
-                .channelFactory(RakChannelFactory.server(EventLoops.getChannelType().getDatagramChannel()))
+                .channelFactory(RakChannelFactory.server(NioDatagramChannel.class))
                 .option(RakChannelOption.RAK_ADVERTISEMENT, ponger.get().toByteBuf())
                 .group(group)
                 .childHandler(serverInitializer);
