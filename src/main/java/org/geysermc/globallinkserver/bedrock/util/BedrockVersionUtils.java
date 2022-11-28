@@ -42,6 +42,7 @@ import com.nukkitx.protocol.bedrock.v534.Bedrock_v534;
 import com.nukkitx.protocol.bedrock.v544.Bedrock_v544;
 import com.nukkitx.protocol.bedrock.v554.Bedrock_v554;
 import com.nukkitx.protocol.bedrock.v557.Bedrock_v557;
+import com.nukkitx.protocol.bedrock.v560.Bedrock_v560;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +55,7 @@ public class BedrockVersionUtils {
      * Default Bedrock codec that should act as a fallback. Should represent the latest available
      * release of the game that Geyser supports.
      */
-    public static final BedrockPacketCodec LATEST_CODEC = Bedrock_v557.V557_CODEC;
+    public static final BedrockPacketCodec LATEST_CODEC = Bedrock_v560.V560_CODEC;
     /**
      * A list of all supported Bedrock versions that can join Geyser
      */
@@ -80,6 +81,7 @@ public class BedrockVersionUtils {
                 .protocolVersion(545)
                 .build());
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v554.V554_CODEC);
+        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v557.V557_CODEC);
         SUPPORTED_BEDROCK_CODECS.add(LATEST_CODEC);
     }
 
