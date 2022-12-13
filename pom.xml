@@ -33,9 +33,9 @@
       <version>8.5.2</version>
     </dependency>
     <dependency>
-      <groupId>com.github.GeyserMC</groupId>
-      <artifactId>MCProtocolLib</artifactId>
-      <version>5bea683</version>
+      <groupId>com.github.steveice10</groupId>
+      <artifactId>mcprotocollib</artifactId>
+      <version>1.19.3-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

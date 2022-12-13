@@ -111,7 +111,6 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             false,
                             GameMode.SPECTATOR,
                             GameMode.SPECTATOR,
-                            1,
                             new String[]{"minecraft:the_end"},
                             REGISTRY_CODEC,
                             "minecraft:the_end",
