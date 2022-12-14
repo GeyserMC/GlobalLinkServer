@@ -95,7 +95,7 @@ public class BedrockPlayer implements Player {
         startGamePacket.setGeneratorId(1);
         startGamePacket.setSpawnBiomeType(SpawnBiomeType.DEFAULT);
         startGamePacket.setCustomBiomeName("");
-        startGamePacket.setForceExperimentalGameplay(OptionalBoolean.of(false));
+        startGamePacket.setForceExperimentalGameplay(OptionalBoolean.empty());
         startGamePacket.setLevelGameType(GameType.CREATIVE);
         startGamePacket.setDifficulty(0);
         startGamePacket.setDefaultSpawn(Vector3i.ZERO);
