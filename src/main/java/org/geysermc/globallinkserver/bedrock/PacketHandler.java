@@ -66,6 +66,12 @@ public class PacketHandler implements BedrockPacketHandler {
         }
     }
 
+    @Override
+    public PacketSignal handlePacket(BedrockPacket packet) {
+        BedrockPacketHandler.super.handlePacket(packet);
+        return PacketSignal.HANDLED; // Avoids warning spam about all the packets we ignore and don't handle
+    }
+
     private boolean setCorrectCodec(int protocolVersion) {
         BedrockCodec packetCodec = BedrockVersionUtils.getBedrockCodec(protocolVersion);
         if (packetCodec == null) {
