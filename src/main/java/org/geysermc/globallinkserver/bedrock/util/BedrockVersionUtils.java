@@ -45,6 +45,7 @@ import com.nukkitx.protocol.bedrock.v554.Bedrock_v554;
 import com.nukkitx.protocol.bedrock.v557.Bedrock_v557;
 import com.nukkitx.protocol.bedrock.v560.Bedrock_v560;
 import com.nukkitx.protocol.bedrock.v567.Bedrock_v567;
+import com.nukkitx.protocol.bedrock.v567.Bedrock_v567patch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,6 +84,11 @@ public class BedrockVersionUtils {
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v557.V557_CODEC);
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v560.V560_CODEC);
         SUPPORTED_BEDROCK_CODECS.add(LATEST_CODEC);
+
+        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v567patch.BEDROCK_V567PATCH.toBuilder()
+                .protocolVersion(568)
+                .minecraftVersion("1.19.63")
+                .build());
     }
 
     /**
