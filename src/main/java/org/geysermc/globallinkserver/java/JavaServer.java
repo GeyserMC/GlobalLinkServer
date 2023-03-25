@@ -25,7 +25,6 @@
 
 package org.geysermc.globallinkserver.java;
 
-import com.github.steveice10.mc.auth.data.GameProfile;
 import com.github.steveice10.mc.auth.service.SessionService;
 import com.github.steveice10.mc.protocol.MinecraftConstants;
 import com.github.steveice10.mc.protocol.MinecraftProtocol;
@@ -61,6 +60,7 @@ import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.zip.GZIPInputStream;
 
 import static com.github.steveice10.mc.protocol.codec.MinecraftCodec.CODEC;
@@ -74,7 +74,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
 
     private final ServerStatusInfo pong = new ServerStatusInfo(
             new VersionInfo(CODEC.getMinecraftVersion(), CODEC.getProtocolVersion()),
-            new PlayerInfo(1, 0, new GameProfile[0]),
+            new PlayerInfo(1, 0, Collections.emptyList()),
             Component.text("Global Link Server"),
             null,
             false);
@@ -130,7 +130,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
 
                     // Just send the position without sending chunks
                     // This loads the player into an empty world and stops them from moving
-                    session.send(new ClientboundPlayerPositionPacket(0, 64, 0, 0, 0, 0, false));
+                    session.send(new ClientboundPlayerPositionPacket(0, 64, 0, 0, 0, 0));
 
                     // Manually call the connect event
                     session.callEvent(new ConnectedEvent(session));
