@@ -41,6 +41,9 @@ public class GlobalLinkServer {
     public static final Logger LOGGER = Logger.getGlobal();
 
     public static void main(String... args) {
+        // Make logging more simple, adopted from https://stackoverflow.com/a/5937929
+        System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS %5$s%6$s%n");
+
         Config config = ConfigReader.readConfig();
 
         PlayerManager playerManager = new PlayerManager();

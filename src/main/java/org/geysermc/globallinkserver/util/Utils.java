@@ -29,12 +29,14 @@ import com.google.gson.*;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.shaded.json.JSONObject;
 import com.nimbusds.jose.shaded.json.JSONValue;
-import com.nukkitx.network.util.Preconditions;
-import com.nukkitx.protocol.bedrock.util.EncryptionUtils;
+import com.nimbusds.jwt.SignedJWT;
+import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils;
+import org.cloudburstmc.protocol.common.util.Preconditions;
 
 import java.net.URI;
 import java.security.interfaces.ECPublicKey;
 import java.util.Iterator;
+import java.util.List;
 
 public class Utils {
     private static final Gson GSON = new Gson();
@@ -55,63 +57,45 @@ public class Utils {
         }
     }
 
-    public static JsonObject validateData(String chainDataString, String skinDataString) throws Exception {
-        // Read the raw chain data
-        JsonObject rawChainData;
-        try {
-            rawChainData = GSON.fromJson(chainDataString, JsonObject.class);
-        } catch (JsonSyntaxException e) {
-            throw new AssertionError("Unable to read chain data!");
-        }
-
-        // Get the parsed chain data
-        JsonElement chainDataTemp = rawChainData.get("chain");
-        if (chainDataTemp == null || !chainDataTemp.isJsonArray()) {
-            throw new AssertionError("Invalid chain data!");
-        }
-
-        JsonArray chainData = chainDataTemp.getAsJsonArray();
-
-        if (!validateChainData(chainData)) {
+    public static JsonObject validateData(List<SignedJWT> certChainData, String clientData) throws Exception {
+        if (!validateChainData(certChainData)) {
             throw new AssertionError("Invalid chain data");
         }
-        JWSObject jwsObject = JWSObject.parse(chainData.get(chainData.size() - 1).getAsString());
+        JWSObject jwsObject = certChainData.get(certChainData.size() - 1);
         JsonObject payload = GSON.fromJson(jwsObject.getPayload().toString(), JsonObject.class);
 
         JsonElement publicKey = payload.get("identityPublicKey");
-
         if (publicKey == null) {
             throw new AssertionError("Missing identity public key!");
         }
-        ECPublicKey identityPublicKey = EncryptionUtils.generateKey(publicKey.getAsString());
 
-        JWSObject skinData = JWSObject.parse(skinDataString);
-        if (!EncryptionUtils.verifyJwt(skinData, identityPublicKey)) {
-            throw new AssertionError("Invalid skin data");
+        ECPublicKey identityPublicKey = EncryptionUtils.generateKey(publicKey.getAsString());
+        JWSObject clientJws = JWSObject.parse(clientData);
+        if (!EncryptionUtils.verifyJwt(clientJws, identityPublicKey)) {
+            throw new AssertionError("Invalid client data");
         }
 
-        JsonElement extraDataTemp = payload.get("extraData");
+        JsonElement extraData = payload.get("extraData");
 
         // Make sure the client sent over the username, xuid and other info
-        if (extraDataTemp == null || !extraDataTemp.isJsonObject()) {
-            throw new AssertionError("Missing client data");
+        if (extraData == null || !extraData.isJsonObject()) {
+            throw new AssertionError("Missing extra data");
         }
 
         // Fetch the client data
-        return extraDataTemp.getAsJsonObject();
+        return extraData.getAsJsonObject();
     }
 
-    private static boolean validateChainData(JsonArray data) throws Exception {
-        if (data.size() != 3) {
+    private static boolean validateChainData(List<SignedJWT> chain) throws Exception {
+        if (chain.size() != 3) {
             return false;
         }
 
         ECPublicKey lastKey = null;
         boolean mojangSigned = false;
-        Iterator<JsonElement> iterator = data.iterator();
+        Iterator<SignedJWT> iterator = chain.iterator();
         while (iterator.hasNext()) {
-            JsonElement node = iterator.next();
-            JWSObject jwt = JWSObject.parse(node.getAsString());
+            SignedJWT jwt = iterator.next();
 
             // x509 cert is expected in every claim
             URI x5u = jwt.getHeader().getX509CertURL();
