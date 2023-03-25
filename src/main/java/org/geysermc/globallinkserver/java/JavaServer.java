@@ -41,7 +41,8 @@ import com.github.steveice10.mc.protocol.data.status.handler.ServerInfoBuilder;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundCommandsPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerAbilitiesPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundSetHealthPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundSetDefaultSpawnPositionPacket;
 import com.github.steveice10.opennbt.NBTIO;
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.packetlib.Server;
@@ -50,6 +51,7 @@ import com.github.steveice10.packetlib.event.server.ServerClosedEvent;
 import com.github.steveice10.packetlib.event.server.SessionAddedEvent;
 import com.github.steveice10.packetlib.event.session.ConnectedEvent;
 import com.github.steveice10.packetlib.tcp.TcpServer;
+import com.nukkitx.math.vector.Vector3i;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.geysermc.globallinkserver.config.Config;
@@ -61,6 +63,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.OptionalInt;
 import java.util.zip.GZIPInputStream;
 
 import static com.github.steveice10.mc.protocol.codec.MinecraftCodec.CODEC;
@@ -98,10 +101,10 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
 
                     session.send(new ClientboundCommandsPacket(
                             new CommandNode[]{
-                                    new CommandNode(CommandType.ROOT, true, new int[]{1, 3}, -1, null, null, null, null),
-                                    new CommandNode(CommandType.LITERAL, true, new int[]{2}, -1, "linkaccount", null, null, null),
-                                    new CommandNode(CommandType.ARGUMENT, true, new int[0], -1, "code", CommandParser.INTEGER, new IntegerProperties(0, 9999), null),
-                                    new CommandNode(CommandType.LITERAL, true, new int[0], -1, "unlinkaccount", null, null, null)
+                                    new CommandNode(CommandType.ROOT, true, new int[]{1, 3}, OptionalInt.empty(), null, null, null, null),
+                                    new CommandNode(CommandType.LITERAL, true, new int[]{2}, OptionalInt.empty(), "linkaccount", null, null, null),
+                                    new CommandNode(CommandType.ARGUMENT, true, new int[0], OptionalInt.empty(), "code", CommandParser.INTEGER, new IntegerProperties(0, 9999), null),
+                                    new CommandNode(CommandType.LITERAL, true, new int[0], OptionalInt.empty(), "unlinkaccount", null, null, null)
                             },
                             0
                     ));
@@ -126,11 +129,16 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             null
                     ));
 
-                    session.send(new ClientboundPlayerAbilitiesPacket(false, false, false, false, 0f, 0f));
+                    session.send(new ClientboundPlayerAbilitiesPacket(false, false, true, false, 0f, 0f));
 
-                    // Just send the position without sending chunks
-                    // This loads the player into an empty world and stops them from moving
-                    session.send(new ClientboundPlayerPositionPacket(0, 64, 0, 0, 0, 0));
+                    // without this the player will spawn only after waiting 30 seconds
+                    // there are multiple options to fix that,
+                    // but this is the best option as we don't want to send chunk and the player is in spectator anyway
+                    session.send(new ClientboundSetHealthPacket(0, 0, 0));
+
+                    // this packet is also required to let our player spawn,
+                    // but the location itself doesn't appear to be used
+                    session.send(new ClientboundSetDefaultSpawnPositionPacket(Vector3i.ZERO, 0));
 
                     // Manually call the connect event
                     session.callEvent(new ConnectedEvent(session));
