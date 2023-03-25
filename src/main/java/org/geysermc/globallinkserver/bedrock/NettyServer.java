@@ -36,7 +36,6 @@ import org.cloudburstmc.protocol.bedrock.BedrockPong;
 import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockServerInitializer;
 
 import java.net.InetSocketAddress;
-import java.util.function.Supplier;
 
 public class NettyServer {
     private final EventLoopGroup group;
@@ -44,11 +43,11 @@ public class NettyServer {
 
     private ChannelFuture future;
 
-    public NettyServer(Supplier<BedrockPong> ponger, BedrockServerInitializer serverInitializer) {
+    public NettyServer(BedrockPong pong, BedrockServerInitializer serverInitializer) {
         group = new NioEventLoopGroup();
         bootstrap = new ServerBootstrap()
                 .channelFactory(RakChannelFactory.server(NioDatagramChannel.class))
-                .option(RakChannelOption.RAK_ADVERTISEMENT, ponger.get().toByteBuf())
+                .option(RakChannelOption.RAK_ADVERTISEMENT, pong.toByteBuf())
                 .group(group)
                 .childHandler(serverInitializer);
     }

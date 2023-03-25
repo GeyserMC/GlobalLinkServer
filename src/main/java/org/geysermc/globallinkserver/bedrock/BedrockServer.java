@@ -25,8 +25,8 @@
 
 package org.geysermc.globallinkserver.bedrock;
 
-import org.cloudburstmc.protocol.bedrock.BedrockPong;
 import lombok.RequiredArgsConstructor;
+import org.cloudburstmc.protocol.bedrock.BedrockPong;
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
 import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockServerInitializer;
@@ -51,20 +51,20 @@ public class BedrockServer implements Server {
             return false;
         }
 
-        BedrockPong pong = new BedrockPong();
-        pong.edition("MCPE");
-        pong.motd("Global Linking");
-        pong.subMotd("Server");
-        pong.playerCount(0);
-        pong.maximumPlayerCount(1);
-        pong.gameType("Survival");
-        pong.ipv4Port(config.getBedrockPort());
-
-        BedrockCodec codec = BedrockVersionUtils.LATEST_CODEC;
-        pong.protocolVersion(codec.getProtocolVersion());
-        pong.version(codec.getMinecraftVersion());
-
-        server = new NettyServer(() -> pong, new ServerInitializer());
+        BedrockCodec latestCodec = BedrockVersionUtils.LATEST_CODEC;
+        server = new NettyServer(
+                new BedrockPong()
+                        .edition("MCPE")
+                        .motd("Global Linking")
+                        .subMotd("Server")
+                        .playerCount(0)
+                        .maximumPlayerCount(1)
+                        .gameType("Survival")
+                        .ipv4Port(config.getBedrockPort())
+                        .protocolVersion(latestCodec.getProtocolVersion())
+                        .version(latestCodec.getMinecraftVersion()),
+                new ServerInitializer()
+        );
         server.bind(new InetSocketAddress(config.getBindIp(), config.getBedrockPort())).awaitUninterruptibly();
         return true;
     }
@@ -76,7 +76,6 @@ public class BedrockServer implements Server {
     }
 
     class ServerInitializer extends BedrockServerInitializer {
-
         @Override
         protected void initSession(BedrockServerSession session) {
             session.setPacketHandler(new PacketHandler(session, playerManager, linkManager));
