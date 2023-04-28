@@ -46,7 +46,7 @@ public interface Player {
     }
 
     default String formatMessage(String message) {
-        return message.replaceAll("&", "§");
+        return message.replace("&", "§");
     }
 
     default String jsonFormatMessage(String message) {
