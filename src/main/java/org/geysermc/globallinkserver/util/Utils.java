@@ -25,7 +25,9 @@
 
 package org.geysermc.globallinkserver.util;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.shaded.json.JSONObject;
 import com.nimbusds.jose.shaded.json.JSONValue;
@@ -57,7 +59,7 @@ public class Utils {
         }
     }
 
-    public static JsonObject validateData(List<SignedJWT> certChainData, String clientData) throws Exception {
+    public static JsonObject validateData(List<SignedJWT> certChainData, SignedJWT clientData) throws Exception {
         if (!validateChainData(certChainData)) {
             throw new AssertionError("Invalid chain data");
         }
@@ -70,8 +72,7 @@ public class Utils {
         }
 
         ECPublicKey identityPublicKey = EncryptionUtils.generateKey(publicKey.getAsString());
-        JWSObject clientJws = JWSObject.parse(clientData);
-        if (!EncryptionUtils.verifyJwt(clientJws, identityPublicKey)) {
+        if (!EncryptionUtils.verifyJwt(clientData, identityPublicKey)) {
             throw new AssertionError("Invalid client data");
         }
 

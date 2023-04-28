@@ -122,10 +122,7 @@ public class PacketHandler implements BedrockPacketHandler {
         }
 
         try {
-            JsonObject extraData = Utils.validateData(
-                    packet.getChain(),
-                    packet.getExtra().getParsedString()
-            );
+            JsonObject extraData = Utils.validateData(packet.getChain(), packet.getExtra());
 
             PlayStatusPacket status = new PlayStatusPacket();
             status.setStatus(PlayStatusPacket.Status.LOGIN_SUCCESS);
