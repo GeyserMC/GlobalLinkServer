@@ -51,9 +51,9 @@ import com.github.steveice10.packetlib.event.server.ServerClosedEvent;
 import com.github.steveice10.packetlib.event.server.SessionAddedEvent;
 import com.github.steveice10.packetlib.event.session.ConnectedEvent;
 import com.github.steveice10.packetlib.tcp.TcpServer;
-import com.nukkitx.math.vector.Vector3i;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
+import org.cloudburstmc.math.vector.Vector3i;
 import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
@@ -126,7 +126,8 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             false,
                             false,
                             false,
-                            null
+                            null,
+                            100
                     ));
 
                     session.send(new ClientboundPlayerAbilitiesPacket(false, false, true, false, 0f, 0f));
