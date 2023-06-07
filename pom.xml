@@ -30,7 +30,7 @@
     <dependency>
       <groupId>com.github.steveice10</groupId>
       <artifactId>mcprotocollib</artifactId>
-      <version>1.20-1-SNAPSHOT</version>
+      <version>1.20-1-20230607.135651-6</version> <!-- Temporary hack - needs to be updated to release once publishing is fixed -->
       <scope>compile</scope>
     </dependency>
     <dependency>
