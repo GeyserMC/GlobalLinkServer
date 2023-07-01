@@ -23,6 +23,12 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.cloudburstmc.protocol</groupId>
+      <artifactId>bedrock-codec</artifactId>
+      <version>3.0.0.Beta1-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>com.nukkitx.fastutil</groupId>
       <artifactId>fastutil-common</artifactId>
       <version>8.5.2</version>
