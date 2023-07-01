@@ -122,7 +122,7 @@ public class PacketHandler implements BedrockPacketHandler {
         }
 
         try {
-            ChainValidationResult.IdentityData extraData = Utils.validateData(packet.getChain(), packet.getExtra());
+            ChainValidationResult.IdentityData extraData = Utils.validateAndEncryptConnection(session, packet.getChain(), packet.getExtra());
 
             PlayStatusPacket status = new PlayStatusPacket();
             status.setStatus(PlayStatusPacket.Status.LOGIN_SUCCESS);

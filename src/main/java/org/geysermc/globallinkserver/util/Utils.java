@@ -25,9 +25,13 @@
 
 package org.geysermc.globallinkserver.util;
 
+import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
+import org.cloudburstmc.protocol.bedrock.packet.ServerToClientHandshakePacket;
 import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
 import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils;
 
+import javax.crypto.SecretKey;
+import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.List;
 
@@ -49,18 +53,32 @@ public class Utils {
         }
     }
 
-    public static ChainValidationResult.IdentityData validateData(List<String> certChainData, String clientDataJwt) throws Exception {
+    public static ChainValidationResult.IdentityData validateAndEncryptConnection(BedrockServerSession session, List<String> certChainData, String clientDataJwt) throws Exception {
         ChainValidationResult result = EncryptionUtils.validateChain(certChainData);
         if (!result.signed()) {
             throw new IllegalArgumentException("Chain is not signed");
         }
-
         PublicKey identityPublicKey = result.identityClaims().parsedIdentityPublicKey();
+
         byte[] clientDataPayload = EncryptionUtils.verifyClientData(clientDataJwt, identityPublicKey);
         if (clientDataPayload == null) {
             throw new IllegalStateException("Client data isn't signed by the given chain data");
         }
 
+        startEncryptionHandshake(session, identityPublicKey);
+
         return result.identityClaims().extraData;
+    }
+
+    private static void startEncryptionHandshake(BedrockServerSession session, PublicKey key) throws Exception {
+        KeyPair serverKeyPair = EncryptionUtils.createKeyPair();
+        byte[] token = EncryptionUtils.generateRandomToken();
+
+        ServerToClientHandshakePacket packet = new ServerToClientHandshakePacket();
+        packet.setJwt(EncryptionUtils.createHandshakeJwt(serverKeyPair, token));
+        session.sendPacketImmediately(packet);
+
+        SecretKey encryptionKey = EncryptionUtils.getSecretKey(serverKeyPair.getPrivate(), key, token);
+        session.enableEncryption(encryptionKey);
     }
 }
