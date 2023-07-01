@@ -19,13 +19,7 @@
     <dependency>
       <groupId>org.cloudburstmc.protocol</groupId>
       <artifactId>bedrock-connection</artifactId>
-      <version>3.0.0.Beta1-20230616.192131-95</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.cloudburstmc.protocol</groupId>
-      <artifactId>bedrock-codec</artifactId>
-      <version>3.0.0.Beta1-20230616.192131-96</version>
+      <version>3.0.0.Beta1-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
