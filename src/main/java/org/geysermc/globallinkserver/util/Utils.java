@@ -25,23 +25,17 @@
 
 package org.geysermc.globallinkserver.util;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.shaded.json.JSONObject;
-import com.nimbusds.jose.shaded.json.JSONValue;
-import com.nimbusds.jwt.SignedJWT;
+import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
+import org.cloudburstmc.protocol.bedrock.packet.ServerToClientHandshakePacket;
+import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
 import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils;
-import org.cloudburstmc.protocol.common.util.Preconditions;
 
-import java.net.URI;
-import java.security.interfaces.ECPublicKey;
-import java.util.Iterator;
+import javax.crypto.SecretKey;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.List;
 
 public class Utils {
-    private static final Gson GSON = new Gson();
 
     public static int parseInt(String toParse) {
         try {
@@ -59,79 +53,32 @@ public class Utils {
         }
     }
 
-    public static JsonObject validateData(List<SignedJWT> certChainData, SignedJWT clientData) throws Exception {
-        if (!validateChainData(certChainData)) {
-            throw new AssertionError("Invalid chain data");
+    public static ChainValidationResult.IdentityData validateAndEncryptConnection(BedrockServerSession session, List<String> certChainData, String clientDataJwt) throws Exception {
+        ChainValidationResult result = EncryptionUtils.validateChain(certChainData);
+        if (!result.signed()) {
+            throw new IllegalArgumentException("Chain is not signed");
         }
-        JWSObject jwsObject = certChainData.get(certChainData.size() - 1);
-        JsonObject payload = GSON.fromJson(jwsObject.getPayload().toString(), JsonObject.class);
+        PublicKey identityPublicKey = result.identityClaims().parsedIdentityPublicKey();
 
-        JsonElement publicKey = payload.get("identityPublicKey");
-        if (publicKey == null) {
-            throw new AssertionError("Missing identity public key!");
-        }
-
-        ECPublicKey identityPublicKey = EncryptionUtils.generateKey(publicKey.getAsString());
-        if (!EncryptionUtils.verifyJwt(clientData, identityPublicKey)) {
-            throw new AssertionError("Invalid client data");
+        byte[] clientDataPayload = EncryptionUtils.verifyClientData(clientDataJwt, identityPublicKey);
+        if (clientDataPayload == null) {
+            throw new IllegalStateException("Client data isn't signed by the given chain data");
         }
 
-        JsonElement extraData = payload.get("extraData");
+        startEncryptionHandshake(session, identityPublicKey);
 
-        // Make sure the client sent over the username, xuid and other info
-        if (extraData == null || !extraData.isJsonObject()) {
-            throw new AssertionError("Missing extra data");
-        }
-
-        // Fetch the client data
-        return extraData.getAsJsonObject();
+        return result.identityClaims().extraData;
     }
 
-    private static boolean validateChainData(List<SignedJWT> chain) throws Exception {
-        if (chain.size() != 3) {
-            return false;
-        }
+    private static void startEncryptionHandshake(BedrockServerSession session, PublicKey key) throws Exception {
+        KeyPair serverKeyPair = EncryptionUtils.createKeyPair();
+        byte[] token = EncryptionUtils.generateRandomToken();
 
-        ECPublicKey lastKey = null;
-        boolean mojangSigned = false;
-        Iterator<SignedJWT> iterator = chain.iterator();
-        while (iterator.hasNext()) {
-            SignedJWT jwt = iterator.next();
+        ServerToClientHandshakePacket packet = new ServerToClientHandshakePacket();
+        packet.setJwt(EncryptionUtils.createHandshakeJwt(serverKeyPair, token));
+        session.sendPacketImmediately(packet);
 
-            // x509 cert is expected in every claim
-            URI x5u = jwt.getHeader().getX509CertURL();
-            if (x5u == null) {
-                return false;
-            }
-
-            ECPublicKey expectedKey = EncryptionUtils.generateKey(jwt.getHeader().getX509CertURL().toString());
-            // First key is self-signed
-            if (lastKey == null) {
-                lastKey = expectedKey;
-            } else if (!lastKey.equals(expectedKey)) {
-                return false;
-            }
-
-            if (!EncryptionUtils.verifyJwt(jwt, lastKey)) {
-                return false;
-            }
-
-            if (mojangSigned) {
-                return !iterator.hasNext();
-            }
-
-            if (lastKey.equals(EncryptionUtils.getMojangPublicKey())) {
-                mojangSigned = true;
-            }
-
-            Object payload = JSONValue.parse(jwt.getPayload().toString());
-            Preconditions.checkArgument(payload instanceof JSONObject, "Payload is not an object");
-
-            Object identityPublicKey = ((JSONObject) payload).get("identityPublicKey");
-            Preconditions.checkArgument(identityPublicKey instanceof String, "identityPublicKey node is missing in chain");
-            lastKey = EncryptionUtils.generateKey((String) identityPublicKey);
-        }
-
-        return mojangSigned;
+        SecretKey encryptionKey = EncryptionUtils.getSecretKey(serverKeyPair.getPrivate(), key, token);
+        session.enableEncryption(encryptionKey);
     }
 }

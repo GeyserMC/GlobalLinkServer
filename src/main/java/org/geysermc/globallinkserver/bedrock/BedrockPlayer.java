@@ -25,7 +25,6 @@
 
 package org.geysermc.globallinkserver.bedrock;
 
-import com.google.gson.JsonObject;
 import io.netty.buffer.Unpooled;
 import org.cloudburstmc.math.vector.Vector2f;
 import org.cloudburstmc.math.vector.Vector3f;
@@ -37,6 +36,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
 import org.cloudburstmc.protocol.common.util.OptionalBoolean;
 import org.geysermc.globallinkserver.bedrock.util.PaletteUtils;
 import org.geysermc.globallinkserver.player.Player;
@@ -53,11 +53,11 @@ public class BedrockPlayer implements Player {
 
     @Setter private int linkId;
 
-    public BedrockPlayer(BedrockServerSession session, JsonObject extraData) {
+    public BedrockPlayer(BedrockServerSession session, ChainValidationResult.IdentityData identity) {
         this.session = session;
-        this.xuid = extraData.get("XUID").getAsString();
+        this.xuid = identity.xuid;
         this.uniqueId = new UUID(0, Utils.parseLong(xuid));
-        this.username = extraData.get("displayName").getAsString();
+        this.username = identity.displayName;
     }
 
     @Override

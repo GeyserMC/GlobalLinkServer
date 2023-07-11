@@ -25,11 +25,11 @@
 
 package org.geysermc.globallinkserver.bedrock;
 
-import com.google.gson.JsonObject;
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
 import org.cloudburstmc.protocol.bedrock.data.PacketCompressionAlgorithm;
 import org.cloudburstmc.protocol.bedrock.packet.*;
+import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
 import org.cloudburstmc.protocol.common.PacketSignal;
 import org.geysermc.globallinkserver.bedrock.util.BedrockVersionUtils;
 import org.geysermc.globallinkserver.link.LinkManager;
@@ -122,7 +122,7 @@ public class PacketHandler implements BedrockPacketHandler {
         }
 
         try {
-            JsonObject extraData = Utils.validateData(packet.getChain(), packet.getExtra());
+            ChainValidationResult.IdentityData extraData = Utils.validateAndEncryptConnection(session, packet.getChain(), packet.getExtra());
 
             PlayStatusPacket status = new PlayStatusPacket();
             status.setStatus(PlayStatusPacket.Status.LOGIN_SUCCESS);

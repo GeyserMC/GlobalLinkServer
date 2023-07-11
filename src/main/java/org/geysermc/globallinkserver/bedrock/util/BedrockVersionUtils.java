@@ -49,6 +49,7 @@ import org.cloudburstmc.protocol.bedrock.codec.v568.Bedrock_v568;
 import org.cloudburstmc.protocol.bedrock.codec.v575.Bedrock_v575;
 import org.cloudburstmc.protocol.bedrock.codec.v582.Bedrock_v582;
 import org.cloudburstmc.protocol.bedrock.codec.v589.Bedrock_v589;
+import org.cloudburstmc.protocol.bedrock.codec.v594.Bedrock_v594;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +62,7 @@ public class BedrockVersionUtils {
      * Default Bedrock codec that should act as a fallback. Should represent the latest available
      * release of the game that Geyser supports.
      */
-    public static final BedrockCodec LATEST_CODEC = Bedrock_v589.CODEC;
+    public static final BedrockCodec LATEST_CODEC = Bedrock_v594.CODEC;
     /**
      * A list of all supported Bedrock versions that can join Geyser
      */
@@ -90,6 +91,7 @@ public class BedrockVersionUtils {
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v568.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v575.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v582.CODEC);
+        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v589.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(LATEST_CODEC);
     }
 
