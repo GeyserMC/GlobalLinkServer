@@ -44,21 +44,14 @@ import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundLo
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerAbilitiesPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundSetHealthPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundSetDefaultSpawnPositionPacket;
-import com.github.steveice10.opennbt.NBTIO;
-import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.packetlib.Server;
 import com.github.steveice10.packetlib.event.server.ServerAdapter;
 import com.github.steveice10.packetlib.event.server.ServerClosedEvent;
 import com.github.steveice10.packetlib.event.server.SessionAddedEvent;
 import com.github.steveice10.packetlib.event.session.ConnectedEvent;
 import com.github.steveice10.packetlib.tcp.TcpServer;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.OptionalInt;
-import java.util.zip.GZIPInputStream;
 import net.kyori.adventure.text.Component;
 import org.cloudburstmc.math.vector.Vector3i;
 import org.geysermc.globallinkserver.config.Config;
@@ -66,8 +59,6 @@ import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
 
 public class JavaServer implements org.geysermc.globallinkserver.Server {
-    private static final CompoundTag REGISTRY_CODEC = loadRegistryCodec();
-
     private final PlayerManager playerManager;
     private final LinkManager linkManager;
 
@@ -134,18 +125,17 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
             session.send(new ClientboundLoginPacket(
                     0,
                     false,
-                    GameMode.SPECTATOR,
-                    GameMode.SPECTATOR,
                     new String[] {"minecraft:the_end"},
-                    REGISTRY_CODEC,
-                    "minecraft:the_end",
-                    "minecraft:the_end",
-                    100,
                     1,
                     0,
                     0,
                     false,
                     false,
+                    "minecraft:the_end",
+                    "minecraft:the_end",
+                    100,
+                    GameMode.SPECTATOR,
+                    GameMode.SPECTATOR,
                     false,
                     false,
                     null,
@@ -187,15 +177,5 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
     public void shutdown() {
         server.close();
         server = null;
-    }
-
-    public static CompoundTag loadRegistryCodec() {
-        try (InputStream inputStream = JavaServer.class.getClassLoader().getResourceAsStream("registry_codec.nbt");
-                DataInputStream stream = new DataInputStream(new GZIPInputStream(inputStream))) {
-            return (CompoundTag) NBTIO.readTag((DataInput) stream);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new AssertionError("Unable to load login registry.");
-        }
     }
 }
