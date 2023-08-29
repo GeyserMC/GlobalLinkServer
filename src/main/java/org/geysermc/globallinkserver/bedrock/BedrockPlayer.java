@@ -32,7 +32,6 @@ import org.cloudburstmc.math.vector.Vector3i;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import org.cloudburstmc.protocol.bedrock.data.*;
-import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -142,11 +141,6 @@ public class BedrockPlayer implements Player {
         startGamePacket.setServerAuthoritativeBlockBreaking(false);
 
         session.sendPacket(startGamePacket);
-
-        // required for 1.16.100 - 1.16.201 (419 and 422)
-        CreativeContentPacket creativeContentPacket = new CreativeContentPacket();
-        creativeContentPacket.setContents(new ItemData[0]);
-        session.sendPacket(creativeContentPacket);
 
         // Send an empty chunk
         LevelChunkPacket data = new LevelChunkPacket();
