@@ -48,7 +48,7 @@ public class PacketHandler implements BedrockPacketHandler {
     /**
      * In Protocol V554 and above, RequestNetworkSettingsPacket is sent before LoginPacket.
      */
-    private boolean loginV554 = false;
+    private boolean networkSettingsRequested = false;
 
     public PacketHandler(
             BedrockServerSession session,
@@ -94,9 +94,7 @@ public class PacketHandler implements BedrockPacketHandler {
 
     @Override
     public PacketSignal handle(RequestNetworkSettingsPacket packet) {
-        if (setCorrectCodec(packet.getProtocolVersion())) {
-            loginV554 = true;
-        } else {
+        if (!setCorrectCodec(packet.getProtocolVersion())) {
             return PacketSignal.HANDLED; // Unsupported version, client has been disconnected
         }
 
@@ -109,16 +107,16 @@ public class PacketHandler implements BedrockPacketHandler {
         session.sendPacketImmediately(responsePacket);
 
         session.setCompression(algorithm);
+        networkSettingsRequested = true;
         return PacketSignal.HANDLED;
     }
 
     @Override
     public PacketSignal handle(LoginPacket packet) {
-        if (!loginV554) {
-            // This is the first packet and compression has not been set yet
-            if (!setCorrectCodec(packet.getProtocolVersion())) {
-                return PacketSignal.HANDLED;
-            }
+        if (!networkSettingsRequested) {
+            // This is expected for pre-1.19.30
+            session.disconnect("yeet");
+            return PacketSignal.HANDLED;
         }
 
         try {
