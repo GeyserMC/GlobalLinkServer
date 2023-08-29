@@ -115,7 +115,11 @@ public class PacketHandler implements BedrockPacketHandler {
     public PacketSignal handle(LoginPacket packet) {
         if (!networkSettingsRequested) {
             // This is expected for pre-1.19.30
-            session.disconnect("yeet");
+            PlayStatusPacket statusPacket = new PlayStatusPacket();
+            statusPacket.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_CLIENT_OLD);
+            session.sendPacketImmediately(statusPacket);
+
+            session.disconnect();
             return PacketSignal.HANDLED;
         }
 
