@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2021 GeyserMC. http://geysermc.org
+ * Copyright (c) 2021-2023 GeyserMC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -8,32 +8,34 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  * @author GeyserMC
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
-
 package org.geysermc.globallinkserver.player;
 
 import com.github.steveice10.mc.auth.data.GameProfile;
 import com.github.steveice10.packetlib.Session;
-import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
 import org.geysermc.globallinkserver.bedrock.BedrockPlayer;
 import org.geysermc.globallinkserver.java.JavaPlayer;
-
-import java.util.*;
 
 public class PlayerManager {
     private final Map<String, JavaPlayer> javaPlayers = new HashMap<>();
@@ -42,7 +44,7 @@ public class PlayerManager {
     public BedrockPlayer addBedrockPlayer(BedrockServerSession session, ChainValidationResult.IdentityData identity) {
         BedrockPlayer player = new BedrockPlayer(session, identity);
 
-        BedrockPlayer old = bedrockPlayers.put(player.getUsername(), player);
+        BedrockPlayer old = bedrockPlayers.put(player.username(), player);
         if (old != null) {
             old.disconnect("You logged in from somewhere else");
         }
@@ -61,32 +63,24 @@ public class PlayerManager {
         return player;
     }
 
-    public JavaPlayer getJavaPlayer(String username) {
-        return javaPlayers.get(username);
-    }
-
-    public BedrockPlayer getBedrockPlayer(String username) {
-        return bedrockPlayers.get(username);
-    }
-
     public void removeJavaPlayer(JavaPlayer player) {
-        javaPlayers.remove(player.getUsername(), player);
+        javaPlayers.remove(player.username(), player);
     }
 
     public void removeBedrockPlayer(BedrockPlayer player) {
-        bedrockPlayers.remove(player.getUsername(), player);
+        bedrockPlayers.remove(player.username(), player);
     }
 
-    public List<Player> getPlayers(IntSet removedTempLinks) {
+    public List<Player> playersByTempLinkIds(IntSet removedTempLinks) {
         List<Player> players = new ArrayList<>();
 
         for (JavaPlayer player : javaPlayers.values()) {
-            if (removedTempLinks.contains(player.getLinkId())) {
+            if (removedTempLinks.contains(player.linkId())) {
                 players.add(player);
             }
         }
         for (BedrockPlayer player : bedrockPlayers.values()) {
-            if (removedTempLinks.contains(player.getLinkId())) {
+            if (removedTempLinks.contains(player.linkId())) {
                 players.add(player);
             }
         }
@@ -96,12 +90,12 @@ public class PlayerManager {
 
     public void kickPlayers(UUID javaPlayer, UUID bedrockPlayer, String reason) {
         for (JavaPlayer player : javaPlayers.values()) {
-            if (player.getUniqueId().equals(javaPlayer)) {
+            if (player.uniqueId().equals(javaPlayer)) {
                 player.disconnect(reason);
             }
         }
         for (BedrockPlayer player : bedrockPlayers.values()) {
-            if (player.getUniqueId().equals(bedrockPlayer)) {
+            if (player.uniqueId().equals(bedrockPlayer)) {
                 player.disconnect(reason);
             }
         }

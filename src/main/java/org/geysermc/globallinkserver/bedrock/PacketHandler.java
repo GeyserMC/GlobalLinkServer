@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2021 GeyserMC. http://geysermc.org
+ * Copyright (c) 2021-2023 GeyserMC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -8,27 +8,37 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  * @author GeyserMC
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
-
 package org.geysermc.globallinkserver.bedrock;
 
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
 import org.cloudburstmc.protocol.bedrock.data.PacketCompressionAlgorithm;
-import org.cloudburstmc.protocol.bedrock.packet.*;
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket;
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacketHandler;
+import org.cloudburstmc.protocol.bedrock.packet.ClientCacheStatusPacket;
+import org.cloudburstmc.protocol.bedrock.packet.CommandRequestPacket;
+import org.cloudburstmc.protocol.bedrock.packet.LoginPacket;
+import org.cloudburstmc.protocol.bedrock.packet.NetworkSettingsPacket;
+import org.cloudburstmc.protocol.bedrock.packet.PlayStatusPacket;
+import org.cloudburstmc.protocol.bedrock.packet.RequestNetworkSettingsPacket;
+import org.cloudburstmc.protocol.bedrock.packet.ResourcePackClientResponsePacket;
+import org.cloudburstmc.protocol.bedrock.packet.ResourcePackStackPacket;
+import org.cloudburstmc.protocol.bedrock.packet.ResourcePacksInfoPacket;
+import org.cloudburstmc.protocol.bedrock.packet.SetLocalPlayerAsInitializedPacket;
 import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
 import org.cloudburstmc.protocol.common.PacketSignal;
 import org.geysermc.globallinkserver.bedrock.util.BedrockVersionUtils;
@@ -50,10 +60,7 @@ public class PacketHandler implements BedrockPacketHandler {
      */
     private boolean networkSettingsRequested = false;
 
-    public PacketHandler(
-            BedrockServerSession session,
-            PlayerManager playerManager,
-            LinkManager linkManager) {
+    public PacketHandler(BedrockServerSession session, PlayerManager playerManager, LinkManager linkManager) {
         this.session = session;
         this.playerManager = playerManager;
         this.linkManager = linkManager;
@@ -73,11 +80,11 @@ public class PacketHandler implements BedrockPacketHandler {
     }
 
     private boolean setCorrectCodec(int protocolVersion) {
-        BedrockCodec packetCodec = BedrockVersionUtils.getBedrockCodec(protocolVersion);
+        BedrockCodec packetCodec = BedrockVersionUtils.bedrockCodec(protocolVersion);
         if (packetCodec == null) {
             // Protocol version is not supported
             PlayStatusPacket status = new PlayStatusPacket();
-            if (protocolVersion > BedrockVersionUtils.getLatestProtocolVersion()) {
+            if (protocolVersion > BedrockVersionUtils.latestProtocolVersion()) {
                 status.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_SERVER_OLD);
             } else {
                 status.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_CLIENT_OLD);
@@ -124,7 +131,8 @@ public class PacketHandler implements BedrockPacketHandler {
         }
 
         try {
-            ChainValidationResult.IdentityData extraData = Utils.validateAndEncryptConnection(session, packet.getChain(), packet.getExtra());
+            ChainValidationResult.IdentityData extraData =
+                    Utils.validateAndEncryptConnection(session, packet.getChain(), packet.getExtra());
 
             PlayStatusPacket status = new PlayStatusPacket();
             status.setStatus(PlayStatusPacket.Status.LOGIN_SUCCESS);

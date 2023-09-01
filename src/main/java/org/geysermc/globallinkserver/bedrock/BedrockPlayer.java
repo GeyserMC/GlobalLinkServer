@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2021 GeyserMC. http://geysermc.org
+ * Copyright (c) 2021-2023 GeyserMC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -8,49 +8,56 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  * @author GeyserMC
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
-
 package org.geysermc.globallinkserver.bedrock;
 
 import io.netty.buffer.Unpooled;
+import java.util.UUID;
 import org.cloudburstmc.math.vector.Vector2f;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.math.vector.Vector3i;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
-import org.cloudburstmc.protocol.bedrock.data.*;
-import org.cloudburstmc.protocol.bedrock.packet.*;
-import lombok.Getter;
-import lombok.Setter;
+import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode;
+import org.cloudburstmc.protocol.bedrock.data.ChatRestrictionLevel;
+import org.cloudburstmc.protocol.bedrock.data.EduSharedUriResource;
+import org.cloudburstmc.protocol.bedrock.data.GamePublishSetting;
+import org.cloudburstmc.protocol.bedrock.data.GameRuleData;
+import org.cloudburstmc.protocol.bedrock.data.GameType;
+import org.cloudburstmc.protocol.bedrock.data.PlayerPermission;
+import org.cloudburstmc.protocol.bedrock.data.SpawnBiomeType;
+import org.cloudburstmc.protocol.bedrock.packet.BiomeDefinitionListPacket;
+import org.cloudburstmc.protocol.bedrock.packet.LevelChunkPacket;
+import org.cloudburstmc.protocol.bedrock.packet.PlayStatusPacket;
+import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket;
+import org.cloudburstmc.protocol.bedrock.packet.StartGamePacket;
+import org.cloudburstmc.protocol.bedrock.packet.TextPacket;
 import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
 import org.cloudburstmc.protocol.common.util.OptionalBoolean;
 import org.geysermc.globallinkserver.bedrock.util.PaletteUtils;
 import org.geysermc.globallinkserver.player.Player;
 import org.geysermc.globallinkserver.util.Utils;
 
-import java.util.UUID;
-
-@Getter
 public class BedrockPlayer implements Player {
     private final BedrockServerSession session;
     private final UUID uniqueId;
     private final String xuid;
     private final String username;
 
-    @Setter private int linkId;
+    private int linkId;
 
     public BedrockPlayer(BedrockServerSession session, ChainValidationResult.IdentityData identity) {
         this.session = session;
@@ -166,5 +173,33 @@ public class BedrockPlayer implements Player {
         setEntityMotionPacket.setRuntimeEntityId(1);
         setEntityMotionPacket.setMotion(Vector3f.ZERO);
         session.sendPacket(setEntityMotionPacket);
+    }
+
+    public BedrockServerSession session() {
+        return session;
+    }
+
+    @Override
+    public UUID uniqueId() {
+        return uniqueId;
+    }
+
+    public String xuid() {
+        return xuid;
+    }
+
+    @Override
+    public String username() {
+        return username;
+    }
+
+    @Override
+    public int linkId() {
+        return linkId;
+    }
+
+    @Override
+    public void linkId(int linkId) {
+        this.linkId = linkId;
     }
 }
