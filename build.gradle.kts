@@ -57,4 +57,8 @@ tasks.jar {
     archiveBaseName = "GlobalLinkServer"
     archiveVersion = ""
     archiveClassifier = ""
+
+    manifest {
+        attributes["Main-Class"] = application.mainClass
+    }
 }
