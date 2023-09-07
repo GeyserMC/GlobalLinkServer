@@ -35,6 +35,7 @@ import com.github.steveice10.mc.protocol.data.game.command.CommandParser;
 import com.github.steveice10.mc.protocol.data.game.command.CommandType;
 import com.github.steveice10.mc.protocol.data.game.command.properties.IntegerProperties;
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
+import com.github.steveice10.mc.protocol.data.game.entity.player.PlayerSpawnInfo;
 import com.github.steveice10.mc.protocol.data.status.PlayerInfo;
 import com.github.steveice10.mc.protocol.data.status.ServerStatusInfo;
 import com.github.steveice10.mc.protocol.data.status.VersionInfo;
@@ -131,15 +132,17 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                     0,
                     false,
                     false,
-                    "minecraft:the_end",
-                    "minecraft:the_end",
-                    100,
-                    GameMode.SPECTATOR,
-                    GameMode.SPECTATOR,
                     false,
-                    false,
-                    null,
-                    100));
+                    new PlayerSpawnInfo(
+                            "minecraft:the_end",
+                            "minecraft:the_end",
+                            100,
+                            GameMode.SPECTATOR,
+                            GameMode.SPECTATOR,
+                            false,
+                            false,
+                            null,
+                            100)));
 
             session.send(new ClientboundPlayerAbilitiesPacket(false, false, true, false, 0f, 0f));
 
