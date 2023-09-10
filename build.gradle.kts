@@ -54,9 +54,9 @@ tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 
-    archiveBaseName = "GlobalLinkServer"
-    archiveVersion = ""
-    archiveClassifier = ""
+    archiveBaseName.set("GlobalLinkServer")
+    archiveVersion.set("")
+    archiveClassifier.set("")
 
     manifest {
         attributes["Main-Class"] = application.mainClass
