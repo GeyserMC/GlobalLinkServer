@@ -29,23 +29,27 @@ import java.util.List;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
 import org.cloudburstmc.protocol.bedrock.codec.v589.Bedrock_v589;
 import org.cloudburstmc.protocol.bedrock.codec.v594.Bedrock_v594;
+import org.cloudburstmc.protocol.bedrock.codec.v618.Bedrock_v618;
 
 /**
- * Contains information about the supported Bedrock protocols in Geyser.
+ * Contains information about the supported Bedrock protocols in GlobalLinkServer.
  */
 public class BedrockVersionUtils {
+
     /**
      * Default Bedrock codec that should act as a fallback. Should represent the latest available
-     * release of the game that Geyser supports.
+     * release of the game that GlobalLinkServer supports.
      */
-    public static final BedrockCodec LATEST_CODEC = Bedrock_v594.CODEC;
+    public static final BedrockCodec LATEST_CODEC = Bedrock_v618.CODEC;
+
     /**
-     * A list of all supported Bedrock versions that can join Geyser
+     * A list of all supported Bedrock versions that can join GlobalLinkServer
      */
     public static final List<BedrockCodec> SUPPORTED_BEDROCK_CODECS = new ArrayList<>();
 
     static {
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v589.CODEC);
+        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v594.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(LATEST_CODEC);
     }
 
