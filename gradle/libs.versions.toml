@@ -1,7 +1,7 @@
 [versions]
 gson = "2.10.1"
-protocol = "3.0.0.Beta1-20230708.191602-100"
-protocol-connection = "3.0.0.Beta1-20230708.191602-99"
+protocol = "3.0.0.Beta1-20230908.171156-106"
+protocol-connection = "3.0.0.Beta1-20230908.171156-105"
 netty = "4.1.80.Final"
 fastutil = "8.5.2"
 mcprotocollib = "1.20.2-1-20231003.141424-6"
@@ -12,9 +12,9 @@ indra = "3.1.2"
 
 [libraries]
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
-protocol-common = { module = "org.cloudburstmc.protocol:common", version.ref = "protocol-connection" }
 protocol-codec = { module = "org.cloudburstmc.protocol:bedrock-codec", version.ref = "protocol" }
 protocol-connection = { module = "org.cloudburstmc.protocol:bedrock-connection", version.ref = "protocol-connection" }
+protocol-common = { module = "org.cloudburstmc.protocol:common", version.ref = "protocol-connection" }
 
 netty-handler = { group = "io.netty", name = "netty-handler", version.ref = "netty" }
 
@@ -31,4 +31,4 @@ indra-publishing = { id = "net.kyori.indra.publishing", version.ref = "indra" }
 indra-licenser-spotless = { id = "net.kyori.indra.licenser.spotless", version.ref = "indra" }
 
 [bundles]
-protocol = ["protocol-codec", "protocol-connection"]
+protocol = ["protocol-codec", "protocol-connection", "protocol-common"]
