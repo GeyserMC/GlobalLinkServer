@@ -4,7 +4,7 @@ protocol = "3.0.0.Beta1-20230708.191602-100"
 protocol-connection = "3.0.0.Beta1-20230708.191602-99"
 netty = "4.1.80.Final"
 fastutil = "8.5.2"
-mcprotocollib = "e156e81"
+mcprotocollib = "1.20.2-1-20231003.141424-6"
 adventure-text = "4.9.3" # Match version to MCPL
 mariadb-client = "2.7.3"
 checker-qual = "3.21.1"
@@ -19,7 +19,7 @@ protocol-connection = { module = "org.cloudburstmc.protocol:bedrock-connection",
 netty-handler = { group = "io.netty", name = "netty-handler", version.ref = "netty" }
 
 fastutil-common = { module = "com.nukkitx.fastutil:fastutil-common", version.ref = "fastutil" }
-mcprotocollib = { module = "com.github.GeyserMC:mcprotocollib", version.ref = "mcprotocollib" }
+mcprotocollib = { module = "com.github.steveice10:mcprotocollib", version.ref = "mcprotocollib" }
 adventure-text-legacy = { module = "net.kyori:adventure-text-serializer-legacy", version.ref = "adventure-text" }
 mariadb-client = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb-client" }
 
