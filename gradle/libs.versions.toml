@@ -1,10 +1,10 @@
 [versions]
 gson = "2.10.1"
-protocol = "3.0.0.Beta1-20230908.171156-106"
-protocol-connection = "3.0.0.Beta1-20230908.171156-105"
+protocol = "3.0.0.Beta1-20231016.115644-107"
+protocol-connection = "3.0.0.Beta1-20231016.115644-106"
 netty = "4.1.80.Final"
 fastutil = "8.5.2"
-mcprotocollib = "1.20-1-20230607.135651-6" # Temporary hack - needs to be updated to release once publishing is fixed
+mcprotocollib = "1.20.2-1-20231003.141424-6"
 adventure-text = "4.9.3" # Match version to MCPL
 mariadb-client = "2.7.3"
 checker-qual = "3.21.1"
