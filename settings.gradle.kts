@@ -12,6 +12,9 @@ dependencyResolutionManagement {
         maven("https://jitpack.io") {
             content { includeGroupByRegex("com\\.github\\..*") }
         }
+
+        // Remove when adventure snapshot is no longer used
+        maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     }
 }
 
