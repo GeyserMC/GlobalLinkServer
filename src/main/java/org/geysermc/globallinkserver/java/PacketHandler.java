@@ -26,7 +26,9 @@ package org.geysermc.globallinkserver.java;
 
 import com.github.steveice10.mc.auth.data.GameProfile;
 import com.github.steveice10.mc.protocol.MinecraftConstants;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundSetHealthPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.serverbound.ServerboundChatCommandPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.serverbound.level.ServerboundAcceptTeleportationPacket;
 import com.github.steveice10.packetlib.Session;
 import com.github.steveice10.packetlib.event.session.ConnectedEvent;
 import com.github.steveice10.packetlib.event.session.DisconnectedEvent;
@@ -62,6 +64,11 @@ public class PacketHandler extends SessionAdapter {
                 lastCommand = now;
                 String message = "/" + ((ServerboundChatCommandPacket) packet).getCommand();
                 CommandUtils.handleCommand(linkManager, playerManager, player, message);
+            }
+
+            if (packet instanceof ServerboundAcceptTeleportationPacket) {
+                // if we keep the health on 0, the client will spam us respawn request packets :/
+                session.send(new ClientboundSetHealthPacket(1, 0, 0));
             }
         } catch (Exception e) {
             e.printStackTrace();

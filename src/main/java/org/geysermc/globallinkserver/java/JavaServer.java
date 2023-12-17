@@ -36,6 +36,7 @@ import com.github.steveice10.mc.protocol.data.game.command.CommandType;
 import com.github.steveice10.mc.protocol.data.game.command.properties.IntegerProperties;
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
 import com.github.steveice10.mc.protocol.data.game.entity.player.PlayerSpawnInfo;
+import com.github.steveice10.mc.protocol.data.game.level.notify.GameEvent;
 import com.github.steveice10.mc.protocol.data.status.PlayerInfo;
 import com.github.steveice10.mc.protocol.data.status.ServerStatusInfo;
 import com.github.steveice10.mc.protocol.data.status.VersionInfo;
@@ -43,7 +44,9 @@ import com.github.steveice10.mc.protocol.data.status.handler.ServerInfoBuilder;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundCommandsPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerAbilitiesPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundSetHealthPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundGameEventPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundSetDefaultSpawnPositionPacket;
 import com.github.steveice10.packetlib.Server;
 import com.github.steveice10.packetlib.event.server.ServerAdapter;
@@ -151,12 +154,18 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
             // but this is the best option as we don't want to send chunk and the player is in spectator anyway
             session.send(new ClientboundSetHealthPacket(0, 0, 0));
 
-            // this packet is also required to let our player spawn,
-            // but the location itself doesn't appear to be used
+            // this packet is also required to let our player spawn, but the location itself doesn't matter
             session.send(new ClientboundSetDefaultSpawnPositionPacket(Vector3i.ZERO, 0));
 
             // Manually call the connect event
             session.callEvent(new ConnectedEvent(session));
+
+            // we have to listen to the teleport confirm on the PacketHandler to prevent respawn request packet spam,
+            // so send it after calling ConnectedEvent which adds the PacketHandler as listener
+            session.send(new ClientboundPlayerPositionPacket(0, 0, 0, 0, 0, 0));
+
+            // this packet is required since 1.20.3
+            session.send(new ClientboundGameEventPacket(GameEvent.LEVEL_CHUNKS_LOAD_START, null));
         });
         server.setGlobalFlag(MinecraftConstants.SERVER_COMPRESSION_THRESHOLD, 256); // default
 
