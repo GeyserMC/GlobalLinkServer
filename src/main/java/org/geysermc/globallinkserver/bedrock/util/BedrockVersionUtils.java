@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 GeyserMC
+ * Copyright (c) 2021-2024 GeyserMC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ import org.cloudburstmc.protocol.bedrock.codec.v618.Bedrock_v618;
 import org.cloudburstmc.protocol.bedrock.codec.v622.Bedrock_v622;
 import org.cloudburstmc.protocol.bedrock.codec.v630.Bedrock_v630;
 import org.cloudburstmc.protocol.bedrock.codec.v649.Bedrock_v649;
+import org.cloudburstmc.protocol.bedrock.codec.v662.Bedrock_v662;
 
 /**
  * Contains information about the supported Bedrock protocols in GlobalLinkServer.
@@ -43,7 +44,7 @@ public class BedrockVersionUtils {
      * Default Bedrock codec that should act as a fallback. Should represent the latest available
      * release of the game that GlobalLinkServer supports.
      */
-    public static final BedrockCodec LATEST_CODEC = Bedrock_v649.CODEC;
+    public static final BedrockCodec LATEST_CODEC = Bedrock_v662.CODEC;
 
     /**
      * A list of all supported Bedrock versions that can join GlobalLinkServer
@@ -56,6 +57,7 @@ public class BedrockVersionUtils {
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v618.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v622.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(Bedrock_v630.CODEC);
+        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v649.CODEC);
         SUPPORTED_BEDROCK_CODECS.add(LATEST_CODEC);
     }
 
