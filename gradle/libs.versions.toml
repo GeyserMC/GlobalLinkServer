@@ -1,7 +1,6 @@
 [versions]
 gson = "2.10.1"
-protocol = "3.0.0.Beta1-20240401.132829-127"
-protocol-connection = "3.0.0.Beta1-20240401.132829-126"
+protocol = "3.0.0.Beta2-20240423.201358-2"
 raknet = "1.0.0.CR1-20240330.103819-16"
 netty = "4.1.80.Final"
 fastutil = "8.5.2"
@@ -14,8 +13,8 @@ indra = "3.1.2"
 [libraries]
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 protocol-codec = { module = "org.cloudburstmc.protocol:bedrock-codec", version.ref = "protocol" }
-protocol-connection = { module = "org.cloudburstmc.protocol:bedrock-connection", version.ref = "protocol-connection" }
-protocol-common = { module = "org.cloudburstmc.protocol:common", version.ref = "protocol-connection" }
+protocol-connection = { module = "org.cloudburstmc.protocol:bedrock-connection", version.ref = "protocol" }
+protocol-common = { module = "org.cloudburstmc.protocol:common", version.ref = "protocol" }
 raknet = { group = "org.cloudburstmc.netty", name = "netty-transport-raknet", version.ref = "raknet" }
 
 netty-handler = { group = "io.netty", name = "netty-handler", version.ref = "netty" }
