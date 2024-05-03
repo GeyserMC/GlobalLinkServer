@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 GeyserMC
+ * Copyright (c) 2021-2024 GeyserMC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,36 +24,9 @@
  */
 package org.geysermc.globallinkserver.java;
 
-import static com.github.steveice10.mc.protocol.codec.MinecraftCodec.CODEC;
+import static org.geysermc.mcprotocollib.protocol.codec.MinecraftCodec.CODEC;
 
 import com.github.steveice10.mc.auth.service.SessionService;
-import com.github.steveice10.mc.protocol.MinecraftConstants;
-import com.github.steveice10.mc.protocol.MinecraftProtocol;
-import com.github.steveice10.mc.protocol.ServerLoginHandler;
-import com.github.steveice10.mc.protocol.data.game.command.CommandNode;
-import com.github.steveice10.mc.protocol.data.game.command.CommandParser;
-import com.github.steveice10.mc.protocol.data.game.command.CommandType;
-import com.github.steveice10.mc.protocol.data.game.command.properties.IntegerProperties;
-import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
-import com.github.steveice10.mc.protocol.data.game.entity.player.PlayerSpawnInfo;
-import com.github.steveice10.mc.protocol.data.game.level.notify.GameEvent;
-import com.github.steveice10.mc.protocol.data.status.PlayerInfo;
-import com.github.steveice10.mc.protocol.data.status.ServerStatusInfo;
-import com.github.steveice10.mc.protocol.data.status.VersionInfo;
-import com.github.steveice10.mc.protocol.data.status.handler.ServerInfoBuilder;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundCommandsPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerAbilitiesPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundSetHealthPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundGameEventPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundSetDefaultSpawnPositionPacket;
-import com.github.steveice10.packetlib.Server;
-import com.github.steveice10.packetlib.event.server.ServerAdapter;
-import com.github.steveice10.packetlib.event.server.ServerClosedEvent;
-import com.github.steveice10.packetlib.event.server.SessionAddedEvent;
-import com.github.steveice10.packetlib.event.session.ConnectedEvent;
-import com.github.steveice10.packetlib.tcp.TcpServer;
 import java.util.Collections;
 import java.util.OptionalInt;
 import net.kyori.adventure.text.Component;
@@ -61,6 +34,33 @@ import org.cloudburstmc.math.vector.Vector3i;
 import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
+import org.geysermc.mcprotocollib.network.Server;
+import org.geysermc.mcprotocollib.network.event.server.ServerAdapter;
+import org.geysermc.mcprotocollib.network.event.server.ServerClosedEvent;
+import org.geysermc.mcprotocollib.network.event.server.SessionAddedEvent;
+import org.geysermc.mcprotocollib.network.event.session.ConnectedEvent;
+import org.geysermc.mcprotocollib.network.tcp.TcpServer;
+import org.geysermc.mcprotocollib.protocol.MinecraftConstants;
+import org.geysermc.mcprotocollib.protocol.MinecraftProtocol;
+import org.geysermc.mcprotocollib.protocol.ServerLoginHandler;
+import org.geysermc.mcprotocollib.protocol.data.game.command.CommandNode;
+import org.geysermc.mcprotocollib.protocol.data.game.command.CommandParser;
+import org.geysermc.mcprotocollib.protocol.data.game.command.CommandType;
+import org.geysermc.mcprotocollib.protocol.data.game.command.properties.IntegerProperties;
+import org.geysermc.mcprotocollib.protocol.data.game.entity.player.GameMode;
+import org.geysermc.mcprotocollib.protocol.data.game.entity.player.PlayerSpawnInfo;
+import org.geysermc.mcprotocollib.protocol.data.game.level.notify.GameEvent;
+import org.geysermc.mcprotocollib.protocol.data.status.PlayerInfo;
+import org.geysermc.mcprotocollib.protocol.data.status.ServerStatusInfo;
+import org.geysermc.mcprotocollib.protocol.data.status.VersionInfo;
+import org.geysermc.mcprotocollib.protocol.data.status.handler.ServerInfoBuilder;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundCommandsPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerAbilitiesPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundSetHealthPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.level.ClientboundGameEventPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.level.ClientboundSetDefaultSpawnPositionPacket;
 
 public class JavaServer implements org.geysermc.globallinkserver.Server {
     private final PlayerManager playerManager;
@@ -137,7 +137,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                     false,
                     false,
                     new PlayerSpawnInfo(
-                            "minecraft:the_end",
+                            2,
                             "minecraft:the_end",
                             100,
                             GameMode.SPECTATOR,
@@ -145,7 +145,8 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                             false,
                             false,
                             null,
-                            100)));
+                            100),
+                    true));
 
             session.send(new ClientboundPlayerAbilitiesPacket(false, false, true, false, 0f, 0f));
 

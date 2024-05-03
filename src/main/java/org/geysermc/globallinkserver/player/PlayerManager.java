@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 GeyserMC
+ * Copyright (c) 2021-2024 GeyserMC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@
 package org.geysermc.globallinkserver.player;
 
 import com.github.steveice10.mc.auth.data.GameProfile;
-import com.github.steveice10.packetlib.Session;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,6 +35,7 @@ import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
 import org.geysermc.globallinkserver.bedrock.BedrockPlayer;
 import org.geysermc.globallinkserver.java.JavaPlayer;
+import org.geysermc.mcprotocollib.network.Session;
 
 public class PlayerManager {
     private final Map<String, JavaPlayer> javaPlayers = new HashMap<>();
