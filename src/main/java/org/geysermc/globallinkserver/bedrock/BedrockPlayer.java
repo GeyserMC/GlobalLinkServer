@@ -147,6 +147,10 @@ public class BedrockPlayer implements Player {
         startGamePacket.setRewindHistorySize(0);
         startGamePacket.setServerAuthoritativeBlockBreaking(false);
 
+        startGamePacket.setServerId("");
+        startGamePacket.setWorldId("");
+        startGamePacket.setScenarioId("");
+
         session.sendPacket(startGamePacket);
 
         // Send an empty chunk

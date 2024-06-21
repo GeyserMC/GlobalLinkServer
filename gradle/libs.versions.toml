@@ -1,8 +1,8 @@
 [versions]
 gson = "2.10.1"
-protocol = "3.0.0.Beta2-20240423.201358-2"
-raknet = "1.0.0.CR1-20240330.103819-16"
-netty = "4.1.80.Final"
+protocol = "3.0.0.Beta2-20240616.144648-10"
+raknet = "1.0.0.CR3-20240416.144209-1"
+netty = "4.1.110.Final"
 fastutil = "8.5.2"
 mcprotocollib = "1.20.4-1"
 adventure-text = "4.15.0-20231207.074016-23" # Match version to MCPL
