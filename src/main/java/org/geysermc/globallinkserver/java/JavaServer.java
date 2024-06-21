@@ -29,6 +29,7 @@ import static org.geysermc.mcprotocollib.protocol.codec.MinecraftCodec.CODEC;
 import com.github.steveice10.mc.auth.service.SessionService;
 import java.util.Collections;
 import java.util.OptionalInt;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.cloudburstmc.math.vector.Vector3i;
 import org.geysermc.globallinkserver.config.Config;
@@ -129,7 +130,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
             session.send(new ClientboundLoginPacket(
                     0,
                     false,
-                    new String[] {"minecraft:the_end"},
+                    new Key[] {Key.key("minecraft:the_end")},
                     1,
                     0,
                     0,
@@ -138,7 +139,7 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
                     false,
                     new PlayerSpawnInfo(
                             2,
-                            "minecraft:the_end",
+                            Key.key("minecraft:the_end"),
                             100,
                             GameMode.SPECTATOR,
                             GameMode.SPECTATOR,
@@ -158,15 +159,15 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
             // this packet is also required to let our player spawn, but the location itself doesn't matter
             session.send(new ClientboundSetDefaultSpawnPositionPacket(Vector3i.ZERO, 0));
 
-            // Manually call the connect event
-            session.callEvent(new ConnectedEvent(session));
-
             // we have to listen to the teleport confirm on the PacketHandler to prevent respawn request packet spam,
             // so send it after calling ConnectedEvent which adds the PacketHandler as listener
             session.send(new ClientboundPlayerPositionPacket(0, 0, 0, 0, 0, 0));
 
             // this packet is required since 1.20.3
             session.send(new ClientboundGameEventPacket(GameEvent.LEVEL_CHUNKS_LOAD_START, null));
+
+            // Manually call the connect event
+            session.callEvent(new ConnectedEvent(session));
         });
         server.setGlobalFlag(MinecraftConstants.SERVER_COMPRESSION_THRESHOLD, 256); // default
 
