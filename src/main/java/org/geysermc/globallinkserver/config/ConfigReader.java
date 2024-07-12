@@ -24,6 +24,8 @@
  */
 package org.geysermc.globallinkserver.config;
 
+import static org.geysermc.globallinkserver.GlobalLinkServer.LOGGER;
+
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +38,7 @@ public class ConfigReader {
     private static final Path CONFIG_PATH = Paths.get("./config.json");
 
     public static Config readConfig() {
+        LOGGER.info("Reading config from " + CONFIG_PATH.toAbsolutePath());
         String data = configContent();
         if (data == null) {
             createConfig();
