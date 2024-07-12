@@ -1,30 +1,13 @@
 /*
- * Copyright (c) 2021-2021 GeyserMC. http://geysermc.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * @author GeyserMC
+ * Copyright (c) 2021-2024 GeyserMC
+ * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
-
 package org.geysermc.globallinkserver;
 
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.logging.Logger;
 import org.geysermc.globallinkserver.bedrock.BedrockServer;
 import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.config.ConfigReader;
@@ -32,17 +15,14 @@ import org.geysermc.globallinkserver.java.JavaServer;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
 
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.logging.Logger;
-
 public class GlobalLinkServer {
     private static final Timer TIMER = new Timer();
     public static final Logger LOGGER = Logger.getGlobal();
 
     public static void main(String... args) {
         // Make logging more simple, adopted from https://stackoverflow.com/a/5937929
-        System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS %5$s%6$s%n");
+        System.setProperty(
+                "java.util.logging.SimpleFormatter.format", "%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS %5$s%6$s%n");
 
         Config config = ConfigReader.readConfig();
 
@@ -60,6 +40,7 @@ public class GlobalLinkServer {
         };
         TIMER.scheduleAtFixedRate(task, 0L, 60_000L);
 
-        LOGGER.info("Started Global Linking Server");
+        LOGGER.info(
+                "Started Global Linking Server on java: " + config.javaPort() + ", bedrock: " + config.bedrockPort());
     }
 }
