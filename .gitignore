@@ -6,6 +6,7 @@
 !README.md
 !.github
 !.github/**
+!Dockerfile
 
 # Don't ignore specific gradle files and folders
 !gradle

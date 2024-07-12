@@ -1,13 +1,18 @@
-name: Build
+name: Build and Publish
 
 on: [ push ]
+
+env:
+  IMAGE_NAME: GlobalLinkServer
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -22,13 +27,20 @@ jobs:
           arguments: build
           cache-read-only: ${{ github.ref_name != 'master' && github.ref_name != 'development' }}
 
-      - name: Archive artifact
-        uses: actions/upload-artifact@v3
-        if: success()
-        with:
-          name: GlobalLinkServer
-          path: build/libs/GlobalLinkServer.jar
-          if-no-files-found: error
+      - name: Build image
+        run: docker build . -t $IMAGE_NAME --label "run-number=${GITHUB_RUN_ID}"
+      - name: Registry login
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Push image
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          VERSION=latest
+          
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
 
       - name: Notify Discord
         if: ${{ (success() || failure()) && github.repository == 'GeyserMC/GlobalLinkServer' }}
