@@ -26,7 +26,6 @@ package org.geysermc.globallinkserver.java;
 
 import static org.geysermc.mcprotocollib.protocol.codec.MinecraftCodec.CODEC;
 
-import com.github.steveice10.mc.auth.service.SessionService;
 import java.util.Collections;
 import java.util.OptionalInt;
 import net.kyori.adventure.key.Key;
@@ -35,6 +34,7 @@ import org.cloudburstmc.math.vector.Vector3i;
 import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.player.PlayerManager;
+import org.geysermc.mcprotocollib.auth.SessionService;
 import org.geysermc.mcprotocollib.network.Server;
 import org.geysermc.mcprotocollib.network.event.server.ServerAdapter;
 import org.geysermc.mcprotocollib.network.event.server.ServerClosedEvent;
@@ -68,9 +68,9 @@ public class JavaServer implements org.geysermc.globallinkserver.Server {
     private final LinkManager linkManager;
 
     private final ServerStatusInfo pong = new ServerStatusInfo(
-            new VersionInfo(CODEC.getMinecraftVersion(), CODEC.getProtocolVersion()),
-            new PlayerInfo(1, 0, Collections.emptyList()),
             Component.text("Global Link Server"),
+            new PlayerInfo(1, 0, Collections.emptyList()),
+            new VersionInfo(CODEC.getMinecraftVersion(), CODEC.getProtocolVersion()),
             null,
             false);
 
