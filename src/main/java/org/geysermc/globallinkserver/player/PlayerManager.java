@@ -60,8 +60,6 @@ public class PlayerManager {
             old.disconnect("You logged in from somewhere else");
         }
 
-        player.disconnect("&aYou are now successfully linked! :)");
-
         return player;
     }
 
