@@ -48,8 +48,4 @@ public interface Player {
     default String formatMessage(String message) {
         return message.replace("&", "§");
     }
-
-    default String jsonFormatMessage(String message) {
-        return "{\"text\": \"" + formatMessage(message) + "\"}";
-    }
 }

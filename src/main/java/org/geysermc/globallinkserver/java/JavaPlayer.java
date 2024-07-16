@@ -52,8 +52,8 @@ public class JavaPlayer implements Player {
 
     @Override
     public void disconnect(String reason) {
-        session.send(new ClientboundLoginDisconnectPacket(jsonFormatMessage(reason)));
-        session.disconnect(reason);
+        session.send(new ClientboundLoginDisconnectPacket(LEGACY_SERIALIZER.deserialize(reason)));
+        session.disconnect(LEGACY_SERIALIZER.deserialize(reason));
     }
 
     @Override
