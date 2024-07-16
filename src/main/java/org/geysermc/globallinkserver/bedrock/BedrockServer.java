@@ -25,6 +25,8 @@
 package org.geysermc.globallinkserver.bedrock;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.ThreadLocalRandom;
+
 import org.cloudburstmc.protocol.bedrock.BedrockPong;
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
@@ -63,7 +65,8 @@ public class BedrockServer implements Server {
                         .gameType("Survival")
                         .ipv4Port(config.bedrockPort())
                         .protocolVersion(latestCodec.getProtocolVersion())
-                        .version(latestCodec.getMinecraftVersion()),
+                        .version(latestCodec.getMinecraftVersion())
+                        .serverId(ThreadLocalRandom.current().nextLong()),
                 new ServerInitializer());
         server.bind(new InetSocketAddress(config.bindIp(), config.bedrockPort()))
                 .awaitUninterruptibly();

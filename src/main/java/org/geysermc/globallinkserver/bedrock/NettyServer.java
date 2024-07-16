@@ -47,6 +47,7 @@ public class NettyServer {
         group = new NioEventLoopGroup();
         bootstrap = new ServerBootstrap()
                 .channelFactory(RakChannelFactory.server(NioDatagramChannel.class))
+                .option(RakChannelOption.RAK_GUID, pong.serverId())
                 .option(RakChannelOption.RAK_ADVERTISEMENT, pong.toByteBuf())
                 .group(group)
                 .childHandler(serverInitializer);
