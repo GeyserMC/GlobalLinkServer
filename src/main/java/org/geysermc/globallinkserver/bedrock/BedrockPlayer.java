@@ -25,6 +25,8 @@
 package org.geysermc.globallinkserver.bedrock;
 
 import io.netty.buffer.Unpooled;
+
+import java.util.Collections;
 import java.util.UUID;
 import org.cloudburstmc.math.vector.Vector2f;
 import org.cloudburstmc.math.vector.Vector3f;
@@ -39,6 +41,12 @@ import org.cloudburstmc.protocol.bedrock.data.GameRuleData;
 import org.cloudburstmc.protocol.bedrock.data.GameType;
 import org.cloudburstmc.protocol.bedrock.data.PlayerPermission;
 import org.cloudburstmc.protocol.bedrock.data.SpawnBiomeType;
+import org.cloudburstmc.protocol.bedrock.data.command.CommandData;
+import org.cloudburstmc.protocol.bedrock.data.command.CommandOverloadData;
+import org.cloudburstmc.protocol.bedrock.data.command.CommandParam;
+import org.cloudburstmc.protocol.bedrock.data.command.CommandParamData;
+import org.cloudburstmc.protocol.bedrock.data.command.CommandPermission;
+import org.cloudburstmc.protocol.bedrock.packet.AvailableCommandsPacket;
 import org.cloudburstmc.protocol.bedrock.packet.BiomeDefinitionListPacket;
 import org.cloudburstmc.protocol.bedrock.packet.LevelChunkPacket;
 import org.cloudburstmc.protocol.bedrock.packet.PlayStatusPacket;
@@ -177,6 +185,43 @@ public class BedrockPlayer implements Player {
         setEntityMotionPacket.setRuntimeEntityId(1);
         setEntityMotionPacket.setMotion(Vector3f.ZERO);
         session.sendPacket(setEntityMotionPacket);
+
+        // Send the available commands
+        AvailableCommandsPacket availableCommandsPacket = new AvailableCommandsPacket();
+
+        CommandParamData linkIdParam = new CommandParamData();
+        linkIdParam.setName("linkId");
+        linkIdParam.setType(CommandParam.INT);
+        linkIdParam.setOptional(true);
+
+        availableCommandsPacket.getCommands().add(new CommandData(
+            "linkaccount",
+            "Link your account",
+            Collections.EMPTY_SET,
+            CommandPermission.ANY,
+            null,
+            Collections.EMPTY_LIST,
+            new CommandOverloadData[] {
+                new CommandOverloadData(
+                    false,
+                    new CommandParamData[] {
+                        linkIdParam
+                    }
+                )
+            }
+        ));
+
+        availableCommandsPacket.getCommands().add(new CommandData(
+            "unlinkaccount",
+            "Unlink your account",
+            Collections.EMPTY_SET,
+            CommandPermission.ANY,
+            null,
+            Collections.EMPTY_LIST,
+            new CommandOverloadData[] {}
+        ));
+
+        session.sendPacket(availableCommandsPacket);
     }
 
     public BedrockServerSession session() {
