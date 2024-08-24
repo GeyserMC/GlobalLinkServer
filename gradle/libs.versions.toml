@@ -1,7 +1,6 @@
 [versions]
 gson = "2.10.1"
-protocol = "3.0.0.Beta2-20240712.120855-17"
-raknet = "1.0.0.CR3-20240416.144209-1"
+protocol = "3.0.0.Beta3-20240814.133201-7"
 netty = "4.1.110.Final"
 fastutil = "8.5.2"
 mcprotocollib = "86903ec" # Revert from jitpack after release
@@ -15,7 +14,6 @@ gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 protocol-codec = { module = "org.cloudburstmc.protocol:bedrock-codec", version.ref = "protocol" }
 protocol-connection = { module = "org.cloudburstmc.protocol:bedrock-connection", version.ref = "protocol" }
 protocol-common = { module = "org.cloudburstmc.protocol:common", version.ref = "protocol" }
-raknet = { group = "org.cloudburstmc.netty", name = "netty-transport-raknet", version.ref = "raknet" }
 
 netty-handler = { group = "io.netty", name = "netty-handler", version.ref = "netty" }
 
@@ -32,4 +30,4 @@ indra-publishing = { id = "net.kyori.indra.publishing", version.ref = "indra" }
 indra-licenser-spotless = { id = "net.kyori.indra.licenser.spotless", version.ref = "indra" }
 
 [bundles]
-protocol = ["protocol-codec", "protocol-connection", "protocol-common", "raknet"]
+protocol = ["protocol-codec", "protocol-connection", "protocol-common"]

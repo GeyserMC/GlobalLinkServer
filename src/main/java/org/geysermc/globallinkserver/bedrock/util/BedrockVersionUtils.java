@@ -37,35 +37,34 @@ import org.cloudburstmc.protocol.bedrock.codec.v662.Bedrock_v662;
 import org.cloudburstmc.protocol.bedrock.codec.v671.Bedrock_v671;
 import org.cloudburstmc.protocol.bedrock.codec.v685.Bedrock_v685;
 import org.cloudburstmc.protocol.bedrock.codec.v686.Bedrock_v686;
+import org.cloudburstmc.protocol.bedrock.codec.v712.Bedrock_v712;
 
 /**
  * Contains information about the supported Bedrock protocols in GlobalLinkServer.
  */
 public class BedrockVersionUtils {
+    /**
+     * A list of all supported Bedrock versions that can join GlobalLinkServer
+     */
+    public static final List<BedrockCodec> SUPPORTED_BEDROCK_CODECS = new ArrayList<>() {{
+        add(Bedrock_v589.CODEC);
+        add(Bedrock_v594.CODEC);
+        add(Bedrock_v618.CODEC);
+        add(Bedrock_v622.CODEC);
+        add(Bedrock_v630.CODEC);
+        add(Bedrock_v649.CODEC);
+        add(Bedrock_v662.CODEC);
+        add(Bedrock_v671.CODEC);
+        add(Bedrock_v685.CODEC);
+        add(Bedrock_v686.CODEC);
+        add(Bedrock_v712.CODEC);
+    }};
 
     /**
      * Default Bedrock codec that should act as a fallback. Should represent the latest available
      * release of the game that GlobalLinkServer supports.
      */
-    public static final BedrockCodec LATEST_CODEC = Bedrock_v686.CODEC;
-
-    /**
-     * A list of all supported Bedrock versions that can join GlobalLinkServer
-     */
-    public static final List<BedrockCodec> SUPPORTED_BEDROCK_CODECS = new ArrayList<>();
-
-    static {
-        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v589.CODEC);
-        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v594.CODEC);
-        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v618.CODEC);
-        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v622.CODEC);
-        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v630.CODEC);
-        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v649.CODEC);
-        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v662.CODEC);
-        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v671.CODEC);
-        SUPPORTED_BEDROCK_CODECS.add(Bedrock_v685.CODEC);
-        SUPPORTED_BEDROCK_CODECS.add(LATEST_CODEC);
-    }
+    public static final BedrockCodec LATEST_CODEC = SUPPORTED_BEDROCK_CODECS.get(SUPPORTED_BEDROCK_CODECS.size() - 1);
 
     /**
      * Gets the {@link BedrockCodec} of the given protocol version.
