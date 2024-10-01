@@ -1,6 +1,6 @@
 [versions]
 gson = "2.10.1"
-protocol = "3.0.0.Beta3-20240814.133201-7"
+protocol = "3.0.0.Beta5-20240916.181041-6"
 netty = "4.1.110.Final"
 fastutil = "8.5.2"
 mcprotocollib = "86903ec" # Revert from jitpack after release

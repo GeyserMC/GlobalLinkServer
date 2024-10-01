@@ -84,7 +84,7 @@ public class LinkManager {
     private int createCode() {
         int code = -1;
         while (code == -1) {
-            code = random.nextInt(9999) + 1;
+            code = random.nextInt(9999 + 1); // the bound is exclusive
 
             TempLink link = tempLinks.get(code);
             if (isLinkValid(link)) {

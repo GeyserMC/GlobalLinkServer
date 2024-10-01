@@ -38,6 +38,7 @@ import org.cloudburstmc.protocol.bedrock.codec.v671.Bedrock_v671;
 import org.cloudburstmc.protocol.bedrock.codec.v685.Bedrock_v685;
 import org.cloudburstmc.protocol.bedrock.codec.v686.Bedrock_v686;
 import org.cloudburstmc.protocol.bedrock.codec.v712.Bedrock_v712;
+import org.cloudburstmc.protocol.bedrock.codec.v729.Bedrock_v729;
 
 /**
  * Contains information about the supported Bedrock protocols in GlobalLinkServer.
@@ -58,6 +59,7 @@ public class BedrockVersionUtils {
         add(Bedrock_v685.CODEC);
         add(Bedrock_v686.CODEC);
         add(Bedrock_v712.CODEC);
+        add(Bedrock_v729.CODEC);
     }};
 
     /**
