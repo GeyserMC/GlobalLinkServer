@@ -1,5 +1,4 @@
 plugins {
-    application
     alias(libs.plugins.indra)
     alias(libs.plugins.indra.licenser.spotless)
 }
@@ -8,24 +7,15 @@ group = "org.geysermc.globallinkserver"
 
 dependencies {
     implementation(libs.gson) // newer version required for record support
-    implementation(libs.fastutil.common)
 
-    implementation(libs.bundles.protocol)
-    implementation(libs.mcprotocollib) {
-        exclude("io.netty", "netty-all")
-    }
+    implementation(libs.bundles.fastutil)
 
-    // mcprotocollib won't work without this
-    implementation(libs.netty.handler)
+    compileOnly(libs.spigot.api)
+    compileOnly(libs.geyser.api)
 
-    implementation(libs.adventure.text.legacy)
     implementation(libs.mariadb.client)
 
     compileOnly(libs.checker.qual)
-}
-
-application {
-    mainClass.set("org.geysermc.globallinkserver.GlobalLinkServer")
 }
 
 indra {
@@ -57,8 +47,4 @@ tasks.jar {
     archiveBaseName = "GlobalLinkServer"
     archiveVersion = ""
     archiveClassifier = ""
-
-    manifest {
-        attributes["Main-Class"] = application.mainClass
-    }
 }

@@ -1,0 +1,6 @@
+main: org.geysermc.globallinkserver.GlobalLinkServer
+name: GlobalLinkServerPlugin
+author: GeyserMC
+website: link.geysermc.org
+version: 1.0.0
+api-version: 1.13

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 GeyserMC
+ * Copyright (c) 2021-2025 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
@@ -8,39 +8,49 @@ package org.geysermc.globallinkserver;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
-import org.geysermc.globallinkserver.bedrock.BedrockServer;
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.config.ConfigReader;
-import org.geysermc.globallinkserver.java.JavaServer;
 import org.geysermc.globallinkserver.link.LinkManager;
-import org.geysermc.globallinkserver.player.PlayerManager;
+import org.geysermc.globallinkserver.util.CommandUtils;
 
-public class GlobalLinkServer {
+public class GlobalLinkServer extends JavaPlugin {
     private static final Timer TIMER = new Timer();
-    public static final Logger LOGGER = Logger.getGlobal();
+    public static Logger LOGGER;
 
-    public static void main(String... args) {
-        // Make logging more simple, adopted from https://stackoverflow.com/a/5937929
-        System.setProperty(
-                "java.util.logging.SimpleFormatter.format", "%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS %5$s%6$s%n");
+    private LinkManager linkManager;
+
+    @Override
+    public void onEnable() {
+        LOGGER = getLogger();
 
         Config config = ConfigReader.readConfig();
+        linkManager = new LinkManager(config);
 
-        PlayerManager playerManager = new PlayerManager();
-        LinkManager linkManager = new LinkManager(config);
-
-        new JavaServer(playerManager, linkManager).startServer(config);
-        new BedrockServer(playerManager, linkManager).startServer(config);
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, linkManager::cleanupTempLinks, 0, 0);
 
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                linkManager.cleanupTempLinks(playerManager);
+                linkManager.cleanupTempLinks();
             }
         };
         TIMER.scheduleAtFixedRate(task, 0L, 60_000L);
 
-        LOGGER.info(
-                "Started Global Linking Server on java: " + config.javaPort() + ", bedrock: " + config.bedrockPort());
+        LOGGER.info("Started Global Linking Server plugin!");
+    }
+
+    @Override
+    public boolean onCommand(
+            @NonNull CommandSender sender, @NonNull Command command, @NonNull String label, @NonNull String[] args) {
+        if (sender instanceof Player player) {
+            CommandUtils.handleCommand(linkManager, player, command.getName() + " " + String.join(" ", args));
+        }
+        return true;
     }
 }

@@ -1,38 +1,17 @@
 /*
- * Copyright (c) 2021-2023 GeyserMC
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- * @author GeyserMC
+ * Copyright (c) 2021-2025 GeyserMC
+ * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
 package org.geysermc.globallinkserver.util;
 
-import org.geysermc.globallinkserver.java.JavaPlayer;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.link.TempLink;
-import org.geysermc.globallinkserver.player.Player;
-import org.geysermc.globallinkserver.player.PlayerManager;
 
 public class CommandUtils {
-    public static void handleCommand(
-            LinkManager linkManager, PlayerManager playerManager, Player player, String message) {
+    public static void handleCommand(LinkManager linkManager, Player player, String message) {
 
         String[] args = message.split(" ");
 
@@ -52,11 +31,11 @@ public class CommandUtils {
                     return;
                 }
 
-                if (player instanceof JavaPlayer) {
-                    tempLink.javaId(player.uniqueId());
-                    tempLink.javaUsername(player.username());
+                if (Utils.isBedrockPlayer(player)) {
+                    tempLink.bedrockId(player.getUniqueId());
                 } else {
-                    tempLink.bedrockId(player.uniqueId());
+                    tempLink.javaId(player.getUniqueId());
+                    tempLink.javaUsername(player.getDisplayName());
                 }
 
                 if (tempLink.javaId() == null || tempLink.bedrockId() == null) {
@@ -76,20 +55,25 @@ public class CommandUtils {
                         return;
                     }
 
-                    playerManager.kickPlayers(
-                            tempLink.javaId(), tempLink.bedrockId(), "&aYou are now successfully linked! :)");
+                    Player javaPlayer = Bukkit.getPlayer(tempLink.javaId());
+                    Player bedrockPlayer = Bukkit.getPlayer(tempLink.bedrockId());
+
+                    if (javaPlayer != null) {
+                        javaPlayer.kickPlayer("&aYou are now successfully linked! :)");
+                    }
+
+                    if (bedrockPlayer != null) {
+                        bedrockPlayer.kickPlayer("&aYou are now successfully linked! :)");
+                    }
                 });
                 return;
             }
 
             if (args.length == 1) {
-                if (player.linkId() != 0) {
-                    linkManager.removeTempLink(player.linkId());
-                }
+                linkManager.removeTempLinkIfPresent(player);
 
                 String code = String.format("%04d", linkManager.createTempLink(player));
-
-                String otherPlatform = player instanceof JavaPlayer ? "Bedrock" : "Java";
+                String otherPlatform = Utils.isBedrockPlayer(player) ? "Java" : "Bedrock";
 
                 player.sendMessage("&aPlease join on " + otherPlatform + " and run `&9/linkaccount &3" + code + "&a`");
                 return;

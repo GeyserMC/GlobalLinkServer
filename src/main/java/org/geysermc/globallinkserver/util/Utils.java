@@ -1,39 +1,12 @@
 /*
- * Copyright (c) 2021-2021 GeyserMC. http://geysermc.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * @author GeyserMC
+ * Copyright (c) 2021-2025 GeyserMC
+ * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
-
 package org.geysermc.globallinkserver.util;
 
-import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
-import org.cloudburstmc.protocol.bedrock.packet.ServerToClientHandshakePacket;
-import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
-import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils;
-
-import javax.crypto.SecretKey;
-import java.security.KeyPair;
-import java.security.PublicKey;
-import java.util.List;
+import org.bukkit.entity.Player;
+import org.geysermc.geyser.api.GeyserApi;
 
 public class Utils {
 
@@ -45,40 +18,7 @@ public class Utils {
         }
     }
 
-    public static long parseLong(String toParse) {
-        try {
-            return Long.parseLong(toParse);
-        } catch (NumberFormatException exception) {
-            return -1;
-        }
-    }
-
-    public static ChainValidationResult.IdentityData validateAndEncryptConnection(BedrockServerSession session, List<String> certChainData, String clientDataJwt) throws Exception {
-        ChainValidationResult result = EncryptionUtils.validateChain(certChainData);
-        if (!result.signed()) {
-            throw new IllegalArgumentException("Chain is not signed");
-        }
-        PublicKey identityPublicKey = result.identityClaims().parsedIdentityPublicKey();
-
-        byte[] clientDataPayload = EncryptionUtils.verifyClientData(clientDataJwt, identityPublicKey);
-        if (clientDataPayload == null) {
-            throw new IllegalStateException("Client data isn't signed by the given chain data");
-        }
-
-        startEncryptionHandshake(session, identityPublicKey);
-
-        return result.identityClaims().extraData;
-    }
-
-    private static void startEncryptionHandshake(BedrockServerSession session, PublicKey key) throws Exception {
-        KeyPair serverKeyPair = EncryptionUtils.createKeyPair();
-        byte[] token = EncryptionUtils.generateRandomToken();
-
-        ServerToClientHandshakePacket packet = new ServerToClientHandshakePacket();
-        packet.setJwt(EncryptionUtils.createHandshakeJwt(serverKeyPair, token));
-        session.sendPacketImmediately(packet);
-
-        SecretKey encryptionKey = EncryptionUtils.getSecretKey(serverKeyPair.getPrivate(), key, token);
-        session.enableEncryption(encryptionKey);
+    public static boolean isBedrockPlayer(Player player) {
+        return GeyserApi.api().isBedrockPlayer(player.getUniqueId());
     }
 }

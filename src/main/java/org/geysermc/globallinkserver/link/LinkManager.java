@@ -1,25 +1,6 @@
 /*
- * Copyright (c) 2021-2023 GeyserMC
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- * @author GeyserMC
+ * Copyright (c) 2021-2025 GeyserMC
+ * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
 package org.geysermc.globallinkserver.link;
@@ -31,17 +12,15 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.geysermc.globallinkserver.config.Config;
-import org.geysermc.globallinkserver.java.JavaPlayer;
-import org.geysermc.globallinkserver.player.Player;
-import org.geysermc.globallinkserver.player.PlayerManager;
+import org.geysermc.globallinkserver.util.Utils;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
 
 public class LinkManager {
@@ -52,6 +31,7 @@ public class LinkManager {
     private final MariaDbPoolDataSource dataSource;
 
     private final Random random = new Random();
+    private final HashMap<UUID, Integer> CURRENT_LINK_CODES = new HashMap<>();
 
     public LinkManager(Config config) {
         try {
@@ -65,18 +45,17 @@ public class LinkManager {
 
     public int createTempLink(Player player) {
         TempLink link = new TempLink();
-        if (player instanceof JavaPlayer) {
-            link.javaId(player.uniqueId());
-            link.javaUsername(player.username());
+        if (Utils.isBedrockPlayer(player)) {
+            link.bedrockId(player.getUniqueId());
         } else {
-            link.bedrockId(player.uniqueId());
+            link.javaId(player.getUniqueId());
+            link.javaUsername(player.getDisplayName());
         }
         link.expiryTime(System.currentTimeMillis() + TEMP_LINK_DURATION);
         link.code(createCode());
 
         tempLinks.put(link.code(), link);
-
-        player.linkId(link.code());
+        CURRENT_LINK_CODES.put(player.getUniqueId(), link.code());
 
         return link.code();
     }
@@ -104,8 +83,11 @@ public class LinkManager {
         return link != null && currentMillis - link.expiryTime() < TEMP_LINK_DURATION;
     }
 
-    public void removeTempLink(int linkId) {
-        tempLinks.remove(linkId);
+    public void removeTempLinkIfPresent(Player player) {
+        Integer linkId = CURRENT_LINK_CODES.remove(player.getUniqueId());
+        if (linkId != null) {
+            tempLinks.remove((int) linkId);
+        }
     }
 
     public CompletableFuture<Boolean> finaliseLink(TempLink tempLink) {
@@ -136,12 +118,12 @@ public class LinkManager {
                     try (Connection connection = dataSource.getConnection()) {
 
                         PreparedStatement query;
-                        if (player instanceof JavaPlayer) {
-                            query = connection.prepareStatement("DELETE FROM `links` WHERE `java_id` = ?;");
-                            query.setString(1, player.uniqueId().toString());
-                        } else {
+                        if (Utils.isBedrockPlayer(player)) {
                             query = connection.prepareStatement("DELETE FROM `links` WHERE `bedrock_id` = ?;");
-                            query.setLong(1, player.uniqueId().getLeastSignificantBits());
+                            query.setLong(1, player.getUniqueId().getLeastSignificantBits());
+                        } else {
+                            query = connection.prepareStatement("DELETE FROM `links` WHERE `java_id` = ?;");
+                            query.setString(1, player.getUniqueId().toString());
                         }
                         boolean affected = query.executeUpdate() != 0;
                         query.close();
@@ -153,7 +135,7 @@ public class LinkManager {
                 executorService);
     }
 
-    public void cleanupTempLinks(PlayerManager playerManager) {
+    public void cleanupTempLinks() {
         IntSet removedLinks = new IntArraySet();
 
         Iterator<TempLink> iterator = tempLinks.values().iterator();
@@ -168,12 +150,16 @@ public class LinkManager {
             }
         }
 
-        List<Player> players = playerManager.playersByTempLinkIds(removedLinks);
-        for (Player player : players) {
-            player.sendMessage(String.format(
-                    "&cYour link (%s) has expired! Run the link account command again if you need a new code.",
-                    player.linkId()));
-            player.linkId(0);
+        for (Map.Entry<UUID, Integer> entry : CURRENT_LINK_CODES.entrySet()) {
+            if (removedLinks.contains((int) entry.getValue())) {
+                Player player = Bukkit.getPlayer(entry.getKey());
+                int currentLinkCode = CURRENT_LINK_CODES.remove(entry.getKey());
+                if (player != null) {
+                    player.sendMessage(String.format(
+                            "&cYour link (%s) has expired! Run the link account command again if you need a new code.",
+                            currentLinkCode));
+                }
+            }
         }
     }
 }
