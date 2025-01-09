@@ -24,12 +24,22 @@
  */
 package org.geysermc.globallinkserver.link;
 
+import org.bukkit.entity.Player;
+
 import java.util.UUID;
 
 public class Link {
     private UUID bedrockId;
     private UUID javaId;
     private String javaUsername;
+
+    public Link() {
+    }
+
+    public Link(Player javaPlayer) {
+        this.javaId = javaPlayer.getUniqueId();
+        this.javaUsername = javaPlayer.getName();
+    }
 
     public UUID bedrockId() {
         return bedrockId;

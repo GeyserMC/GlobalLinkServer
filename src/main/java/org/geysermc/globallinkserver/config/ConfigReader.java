@@ -5,27 +5,37 @@
  */
 package org.geysermc.globallinkserver.config;
 
-import static org.geysermc.globallinkserver.GlobalLinkServer.LOGGER;
-
 import com.google.gson.Gson;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.plugin.java.JavaPlugin;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class ConfigReader {
     private static final Gson GSON = new Gson();
-    private static final Path CONFIG_PATH = Paths.get("config.json");
+    private static Path CONFIG_PATH;
 
-    public static Config readConfig() {
-        LOGGER.info("Reading config from " + CONFIG_PATH.toAbsolutePath());
-        String data = configContent();
-        if (data == null) {
-            createConfig();
-        }
-        data = configContent();
+    public static Config readConfig(JavaPlugin plugin) {
+        plugin.saveDefaultConfig();
+        var config = plugin.getConfig();
+        plugin.saveConfig();
+        return new Config(config.getString("hostname"),
+                config.getString("username"),
+                config.getString("password"),
+                config.getString("database"));
 
-        return GSON.fromJson(data, Config.class);
+//        CONFIG_PATH = path;
+//        LOGGER.info("Reading config from " + CONFIG_PATH.toAbsolutePath());
+//        String data = configContent();
+//        if (data == null) {
+//            createConfig();
+//        }
+//        data = configContent();
+//
+//        return GSON.fromJson(data, Config.class);
     }
 
     private static String configContent() {
@@ -38,6 +48,7 @@ public class ConfigReader {
 
     private static void createConfig() {
         try {
+            //noinspection DataFlowIssue
             Files.copy(ConfigReader.class.getResourceAsStream("/config.json"), CONFIG_PATH);
         } catch (IOException exception) {
             throw new RuntimeException("Failed to copy config", exception);

@@ -32,17 +32,15 @@ public class TempLink extends Link {
         return code;
     }
 
-    public TempLink code(int code) {
+    public void code(int code) {
         this.code = code;
-        return this;
     }
 
     public long expiryTime() {
         return expiryTime;
     }
 
-    public TempLink expiryTime(long expiryTime) {
+    public void expiryTime(long expiryTime) {
         this.expiryTime = expiryTime;
-        return this;
     }
 }

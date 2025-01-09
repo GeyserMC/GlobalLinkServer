@@ -6,5 +6,8 @@
 package org.geysermc.globallinkserver.config;
 
 public record Config(
-        // database related
-        String hostname, String username, String password, String database) {}
+        String hostname,
+        String username,
+        String password,
+        String database
+) {}

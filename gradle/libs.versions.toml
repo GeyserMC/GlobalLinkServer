@@ -1,16 +1,14 @@
 [versions]
 gson = "2.10.1"
 fastutil = "8.5.2"
-adventure-text = "4.15.0-20231207.074016-23" # Match version to MCPL
 mariadb-client = "2.7.3"
 checker-qual = "3.21.1"
 indra = "3.1.2"
-
-spigot-api = "1.16.5-R0.1-SNAPSHOT"
+paperweight = "2.0.0-beta.12"
+runpaper = "2.3.1"
 
 [libraries]
-spigot-api = { group = "org.spigotmc", name = "spigot-api", version.ref = "spigot-api" }
-geyser-api = { group = "org.geysermc.geyser", name = "api", version = "2.6.0-SNAPSHOT" }
+floodgate-api = { group = "org.geysermc.floodgate", name = "api", version = "2.2.3-SNAPSHOT" }
 
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 
@@ -26,6 +24,8 @@ checker-qual = { module = "org.checkerframework:checker-qual", version.ref = "ch
 indra = { id = "net.kyori.indra", version.ref = "indra" }
 indra-publishing = { id = "net.kyori.indra.publishing", version.ref = "indra" }
 indra-licenser-spotless = { id = "net.kyori.indra.licenser.spotless", version.ref = "indra" }
+paperweight = { id = "io.papermc.paperweight.userdev", version.ref = "paperweight" }
+runpaper = { id = "xyz.jpenilla.run-paper", version.ref = "runpaper" }
 
 [bundles]
 fastutil = [ "fastutil-int-int-maps", "fastutil-int-object-maps", "fastutil-object-int-maps", "fastutil-object-object-maps" ]

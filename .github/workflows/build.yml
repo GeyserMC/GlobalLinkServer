@@ -18,7 +18,7 @@ jobs:
 
       - uses: actions/setup-java@v3
         with:
-          java-version: 17
+          java-version: 21
           distribution: temurin
 
       - name: Build
@@ -26,24 +26,6 @@ jobs:
         with:
           arguments: build
           cache-read-only: ${{ github.ref_name != 'master' && github.ref_name != 'development' }}
-
-      - name: Build image
-        if: ${{ github.repository == 'GeyserMC/GlobalLinkServer' && github.ref_name == 'master' }}
-        run: docker build . -t $IMAGE_NAME --label "run-number=${GITHUB_RUN_ID}"
-      - name: Registry login
-        if: ${{ github.repository == 'GeyserMC/GlobalLinkServer' && github.ref_name == 'master' }}
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-      - name: Push image
-        if: ${{ github.repository == 'GeyserMC/GlobalLinkServer' && github.ref_name == 'master' }}
-        run: |
-          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-          VERSION=latest
-          
-          echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
 
       - name: Notify Discord
         if: ${{ (success() || failure()) && github.repository == 'GeyserMC/GlobalLinkServer' }}

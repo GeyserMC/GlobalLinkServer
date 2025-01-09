@@ -1,6 +1,14 @@
+name: GlobalLinkServer
+version: '1.0'
 main: org.geysermc.globallinkserver.GlobalLinkServer
-name: GlobalLinkServerPlugin
-author: GeyserMC
-website: link.geysermc.org
-version: 1.0.0
-api-version: 1.13
+description: GlobalLinkServer plugin
+api-version: '1.21.4'
+dependencies:
+  server:
+    floodgate:
+      load: OMIT
+      required: true
+    geyser:
+      load: OMIT
+      required: true
+      join-classpath: false

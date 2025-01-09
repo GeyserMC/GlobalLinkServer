@@ -1,9 +1,0 @@
-{
-  "bind-ip": "0.0.0.0",
-  "bind-port-java": 25565,
-  "bind-port-bedrock": 19132,
-  "hostname": "127.0.0.1",
-  "username": "global_link",
-  "password": "some_pass",
-  "database": "global_link_dev"
-}

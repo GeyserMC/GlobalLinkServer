@@ -11,12 +11,16 @@ import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.geysermc.globallinkserver.config.Config;
@@ -45,11 +49,11 @@ public class LinkManager {
 
     public int createTempLink(Player player) {
         TempLink link = new TempLink();
-        if (Utils.isBedrockPlayer(player)) {
+        if (Utils.isBedrockPlayerId(player)) {
             link.bedrockId(player.getUniqueId());
         } else {
             link.javaId(player.getUniqueId());
-            link.javaUsername(player.getDisplayName());
+            link.javaUsername(player.getName());
         }
         link.expiryTime(System.currentTimeMillis() + TEMP_LINK_DURATION);
         link.code(createCode());
@@ -118,9 +122,10 @@ public class LinkManager {
                     try (Connection connection = dataSource.getConnection()) {
 
                         PreparedStatement query;
-                        if (Utils.isBedrockPlayer(player)) {
-                            query = connection.prepareStatement("DELETE FROM `links` WHERE `bedrock_id` = ?;");
-                            query.setLong(1, player.getUniqueId().getLeastSignificantBits());
+                        if (Utils.isBedrockPlayerId(player)) { // Should never happen
+                            throw new RuntimeException("Floodgate linking was disabled!!!");
+                            //query = connection.prepareStatement("DELETE FROM `links` WHERE `bedrock_id` = ?;");
+                            //query.setLong(1, player.getUniqueId().getLeastSignificantBits());
                         } else {
                             query = connection.prepareStatement("DELETE FROM `links` WHERE `java_id` = ?;");
                             query.setString(1, player.getUniqueId().toString());
@@ -135,9 +140,34 @@ public class LinkManager {
                 executorService);
     }
 
+    public CompletableFuture<Optional<Link>> attemptFindJavaLink(Player player) {
+        return CompletableFuture.supplyAsync(
+                () -> {
+                    try (Connection connection = dataSource.getConnection()) {
+                        try (PreparedStatement query = connection.prepareStatement(
+                                "SELECT `bedrock_id` FROM `links` WHERE `java_id` = ? LIMIT 1")) {
+                            query.setString(1, player.getUniqueId().toString());
+
+                            try (ResultSet resultSet = query.executeQuery()) {
+                                if (resultSet.next()) {
+                                    return Optional.of(
+                                            new Link(player).bedrockId(new UUID(0, resultSet.getLong("bedrock_id")))
+                                    );
+                                } else {
+                                    return Optional.empty(); // No match found
+                                }
+                            }
+                        }
+                    } catch (SQLException exception) {
+                        throw new CompletionException("Error while finding Java link", exception);
+                    }
+                },
+                executorService);
+    }
+
+
     public void cleanupTempLinks() {
         IntSet removedLinks = new IntArraySet();
-
         Iterator<TempLink> iterator = tempLinks.values().iterator();
 
         long ctm = System.currentTimeMillis();
@@ -155,9 +185,8 @@ public class LinkManager {
                 Player player = Bukkit.getPlayer(entry.getKey());
                 int currentLinkCode = CURRENT_LINK_CODES.remove(entry.getKey());
                 if (player != null) {
-                    player.sendMessage(String.format(
-                            "&cYour link (%s) has expired! Run the link account command again if you need a new code.",
-                            currentLinkCode));
+                    player.sendMessage(Component.text("Your link (%s) has expired! Run the link account again if you need a new code.".formatted(currentLinkCode))
+                            .color(NamedTextColor.RED));
                 }
             }
         }
