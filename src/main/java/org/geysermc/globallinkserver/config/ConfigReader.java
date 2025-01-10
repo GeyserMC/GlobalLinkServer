@@ -14,9 +14,22 @@ public class ConfigReader {
         var config = plugin.getConfig();
         plugin.saveConfig();
 
-        return new Config(config.getString("hostname"),
-                config.getString("username"),
-                config.getString("password"),
-                config.getString("database"));
+        var database = config.getConfigurationSection("database");
+        var util = config.getConfigurationSection("util");
+
+        return new Config(new Config.Database(
+                database.getString("hostname"),
+                database.getString("username"),
+                database.getString("password"),
+                database.getString("database")
+        ), new Config.Util(
+                util.getBoolean("hide-join-leave-messages"),
+                util.getBoolean("hide-death-messages"),
+                util.getBoolean("hide-players"),
+                util.getBoolean("disable-chat"),
+                util.getBoolean("void-teleport"),
+                util.getBoolean("prevent-hunger"),
+                util.getBoolean("respawn-on-join")
+        ));
     }
 }

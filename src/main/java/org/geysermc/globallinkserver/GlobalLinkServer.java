@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.text.Component;
@@ -20,6 +21,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -36,6 +40,7 @@ import org.geysermc.globallinkserver.util.Utils;
 public class GlobalLinkServer extends JavaPlugin implements Listener {
     public static Logger LOGGER;
     public static LinkManager linkManager;
+    public static Config config;
 
     public final static Component LINK_INSTRUCTIONS = Component.text("Run the ").color(NamedTextColor.AQUA)
             .append(Component.text("`/link`", NamedTextColor.GREEN))
@@ -49,7 +54,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
     public void onEnable() {
         LOGGER = getLogger();
 
-        Config config = ConfigReader.readConfig(this);
+        config = ConfigReader.readConfig(this);
 
         linkManager = new LinkManager(config);
         CommandUtils commandUtils = new CommandUtils(linkManager);
@@ -128,11 +133,52 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerLoad(PlayerJoinEvent event) {
+        if (config.util().hideJoinLeaveMessages()) event.joinMessage(null);
         Utils.processJoin(event.getPlayer());
+
+        if (config.util().hidePlayers()) {
+            Bukkit.getOnlinePlayers().forEach(player -> {
+                event.getPlayer().hidePlayer(this, player);
+                player.hidePlayer(this, event.getPlayer());
+            });
+        }
+
+        if (config.util().respawnOnJoin()) Utils.fakeRespawn(event.getPlayer());
     }
 
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event) {
+        if (config.util().hideJoinLeaveMessages()) event.quitMessage(null);
         Utils.processLeave(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (config.util().voidTeleport()
+            && event.getEntity() instanceof Player player
+            && event.getCause() == EntityDamageEvent.DamageCause.VOID) {
+            event.setCancelled(true);
+
+            Utils.fakeRespawn(player);
+        }
+    }
+
+    @EventHandler
+    public void onFoodLevelChange(FoodLevelChangeEvent event) {
+        if (config.util().preventHunger()) {
+            if (event.getFoodLevel() < event.getEntity().getFoodLevel()) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        if (config.util().hideDeathMessages()) event.deathMessage(null);
+    }
+
+    @EventHandler
+    public void onPlayerChat(AsyncChatEvent event) {
+        if (config.util().disableChat()) event.setCancelled(true);
     }
 }

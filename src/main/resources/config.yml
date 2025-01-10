@@ -1,4 +1,14 @@
-hostname: 127.0.0.1
-username: global_link
-password: some_pass
-database: global_link_dev
+database:
+  hostname: 127.0.0.1
+  username: global_link
+  password: some_pass
+  database: global_link_dev
+
+util:
+  hide-join-leave-messages: true
+  hide-death-messages: true
+  hide-players: true
+  disable-chat: true
+  void-teleport: true
+  prevent-hunger: true
+  respawn-on-join: true

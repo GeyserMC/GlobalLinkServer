@@ -41,8 +41,8 @@ public class LinkManager {
     public LinkManager(Config config) {
         try {
             Class.forName("org.mariadb.jdbc.Driver");
-            dataSource = new MariaDbPoolDataSource("jdbc:mariadb://" + config.hostname() + "/" + config.database()
-                    + "?user=" + config.username() + "&password=" + config.password() + "&minPoolSize=1&maxPoolSize=3");
+            dataSource = new MariaDbPoolDataSource("jdbc:mariadb://" + config.database().hostname() + "/" + config.database().database()
+                    + "?user=" + config.database().username() + "&password=" + config.database().password() + "&minPoolSize=1&maxPoolSize=3");
         } catch (ClassNotFoundException exception) {
             throw new RuntimeException("Cannot find required class to load the MariaDB database");
         }

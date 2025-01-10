@@ -10,7 +10,9 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
@@ -87,5 +89,11 @@ public class Utils {
                     link.bedrockUsername(), link.bedrockId())).color(NamedTextColor.GREEN)
             );
         }
+    }
+
+    public static void fakeRespawn(Player player) {
+        player.teleport(player.getWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.COMMAND);
+        player.setFallDistance(0);
+        player.setHealth(player.getAttribute(Attribute.MAX_HEALTH).getValue());
     }
 }
