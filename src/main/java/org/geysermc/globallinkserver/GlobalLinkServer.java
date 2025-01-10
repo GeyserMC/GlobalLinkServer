@@ -5,6 +5,8 @@
  */
 package org.geysermc.globallinkserver;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -18,6 +20,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
@@ -88,7 +91,10 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
             commands.register(
                     Commands.literal("linkinfo")
                             .requires(ctx -> ctx.getSender() instanceof Player)
-                            .executes(commandUtils::info)
+                            .executes(ctx -> {
+                                Utils.sendCurrentLinkInfo(Utils.getPlayer(ctx));
+                                return 1;
+                            })
                             .build(),
                     "Use this command to show information whether you are currently linked.",
                     List.of("info")
@@ -96,6 +102,28 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         });
 
         LOGGER.info("Started Global Linking Server plugin!");
+    }
+
+    @EventHandler
+    public void onCommands(PlayerCommandSendEvent event) {
+        Collection<String> toRemove = new ArrayList<>();
+        for (String command : event.getCommands()) {
+            if (command.startsWith("link")) {
+                continue;
+            }
+
+            if (command.startsWith("unlink")) {
+                continue;
+            }
+
+            if (command.contains("info")) {
+                continue;
+            }
+
+            toRemove.add(command);
+        }
+
+        event.getCommands().removeAll(toRemove);
     }
 
     @EventHandler

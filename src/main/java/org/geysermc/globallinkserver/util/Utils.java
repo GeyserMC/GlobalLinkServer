@@ -5,8 +5,9 @@
  */
 package org.geysermc.globallinkserver.util;
 
+import com.mojang.brigadier.context.CommandContext;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
@@ -17,9 +18,9 @@ import org.geysermc.globallinkserver.GlobalLinkServer;
 import org.geysermc.globallinkserver.link.Link;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
+@SuppressWarnings("UnstableApiUsage")
 public class Utils {
 
     private static final Map<UUID, Link> linkedPlayers = new Object2ObjectOpenHashMap<>();
@@ -36,21 +37,8 @@ public class Utils {
         return linkedPlayers.get(player.getUniqueId());
     }
 
-    // TODO we do not have bedrock player names!
-    public static Component getLinkInfo(Player player) {
-        Link link = getLink(player);
-        if (link == null) {
-            return null;
-        }
-
-        FloodgatePlayer floodgatePlayer = FloodgateApi.getInstance().getPlayer(player.getUniqueId());
-        if (floodgatePlayer == null) {
-            // Java player
-            return Component.empty();
-        } else {
-            // Bedrock player
-            return Component.empty();
-        }
+    public static Player getPlayer(CommandContext<CommandSourceStack> ctx) {
+        return (Player) ctx.getSource().getExecutor();
     }
 
     public static void processJoin(Player player) {
@@ -72,6 +60,7 @@ public class Utils {
                 linkedPlayers.put(player.getUniqueId(), new Link()
                         .javaUsername(player.getName())
                         .javaId(player.getUniqueId())
+                        .bedrockUsername(floodgatePlayer.getUsername())
                         .bedrockId(floodgatePlayer.getJavaUniqueId()));
             }
         }
@@ -79,5 +68,24 @@ public class Utils {
 
     public static void processLeave(Player player) {
         linkedPlayers.remove(player.getUniqueId());
+    }
+
+    public static void sendCurrentLinkInfo(Player player) {
+        Link link = linkedPlayers.get(player.getUniqueId());
+        if (link == null) {
+            player.sendMessage(Component.text("You are not currently linked.").color(NamedTextColor.AQUA));
+            return;
+        }
+
+        if (FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
+            // Bedrock player, show Java info
+            player.sendMessage(Component.text("You are currently linked to the Java player %s (%s).".formatted(
+                    link.javaUsername(), link.javaId())).color(NamedTextColor.GREEN)
+            );
+        } else {
+            player.sendMessage(Component.text("You are currently linked to the Bedrock player %s (%s).".formatted(
+                    link.bedrockUsername(), link.bedrockId())).color(NamedTextColor.GREEN)
+            );
+        }
     }
 }

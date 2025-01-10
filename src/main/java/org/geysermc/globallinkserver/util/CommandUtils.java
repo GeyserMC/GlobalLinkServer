@@ -11,9 +11,10 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.geysermc.globallinkserver.link.Link;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.link.TempLink;
+
+import static org.geysermc.globallinkserver.util.Utils.getPlayer;
 
 @SuppressWarnings("UnstableApiUsage")
 public class CommandUtils {
@@ -28,7 +29,9 @@ public class CommandUtils {
         Player player = getPlayer(ctx);
 
         if (Utils.isLinked(player)) {
-            player.sendMessage("You are already linked!");
+            player.sendMessage(Component.text("You are already linked! You need to unlink first before linking again.")
+                    .color(NamedTextColor.RED));
+            Utils.sendCurrentLinkInfo(player);
             return 0;
         }
 
@@ -101,6 +104,12 @@ public class CommandUtils {
 
     public int unlink(CommandContext<CommandSourceStack> ctx) {
         Player player = getPlayer(ctx);
+
+        if (!Utils.isLinked(player)) {
+            player.sendMessage(Component.text("You are not currently linked!").color(NamedTextColor.RED));
+            return 0;
+        }
+
         linkManager.unlinkAccount(player).whenComplete((result, error) -> {
             if (error != null) {
                 error.printStackTrace();
@@ -116,23 +125,6 @@ public class CommandUtils {
                 player.kick(Component.text("You are not linked to any account!").color(NamedTextColor.RED));
             }
         });
-        return 1;
-    }
-
-    public static Player getPlayer(CommandContext<CommandSourceStack> ctx) {
-        return (Player) ctx.getSource().getExecutor();
-    }
-
-    public int info(CommandContext<CommandSourceStack> ctx) {
-        Player player = getPlayer(ctx);
-
-        Link link = Utils.getLink(player);
-        if (link == null) {
-            player.sendMessage(Component.text("You are not currently linked!").color(NamedTextColor.RED));
-            return 0;
-        }
-
-        player.sendMessage(Component.text("You are currently linked!").color(NamedTextColor.GREEN));
         return 1;
     }
 }

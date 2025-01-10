@@ -32,6 +32,7 @@ public class Link {
     private UUID bedrockId;
     private UUID javaId;
     private String javaUsername;
+    private String bedrockUsername;
 
     public Link() {
     }
@@ -65,6 +66,15 @@ public class Link {
 
     public Link javaUsername(String javaUsername) {
         this.javaUsername = javaUsername;
+        return this;
+    }
+
+    public String bedrockUsername() {
+        return bedrockUsername;
+    }
+
+    public Link bedrockUsername(String bedrockUsername) {
+        this.bedrockUsername = bedrockUsername;
         return this;
     }
 }

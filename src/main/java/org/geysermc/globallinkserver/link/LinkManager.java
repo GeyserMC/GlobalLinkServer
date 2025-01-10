@@ -23,6 +23,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.globallinkserver.config.Config;
 import org.geysermc.globallinkserver.util.Utils;
 import org.mariadb.jdbc.MariaDbPoolDataSource;
@@ -123,9 +124,8 @@ public class LinkManager {
 
                         PreparedStatement query;
                         if (Utils.isBedrockPlayerId(player)) { // Should never happen
-                            throw new RuntimeException("Floodgate linking was disabled!!!");
-                            //query = connection.prepareStatement("DELETE FROM `links` WHERE `bedrock_id` = ?;");
-                            //query.setLong(1, player.getUniqueId().getLeastSignificantBits());
+                            query = connection.prepareStatement("DELETE FROM `links` WHERE `bedrock_id` = ?;");
+                            query.setLong(1, player.getUniqueId().getLeastSignificantBits());
                         } else {
                             query = connection.prepareStatement("DELETE FROM `links` WHERE `java_id` = ?;");
                             query.setString(1, player.getUniqueId().toString());
@@ -150,8 +150,12 @@ public class LinkManager {
 
                             try (ResultSet resultSet = query.executeQuery()) {
                                 if (resultSet.next()) {
+                                    long bedrockId = resultSet.getLong("bedrock_id");
+                                    String bedrockTag = FloodgateApi.getInstance().getGamertagFor(bedrockId).join();
                                     return Optional.of(
-                                            new Link(player).bedrockId(new UUID(0, resultSet.getLong("bedrock_id")))
+                                            new Link(player)
+                                                    .bedrockId(new UUID(0, bedrockId))
+                                                    .bedrockUsername(bedrockTag)
                                     );
                                 } else {
                                     return Optional.empty(); // No match found
