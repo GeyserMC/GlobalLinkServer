@@ -32,7 +32,8 @@ indra {
 
     spotless {
         java {
-            palantirJavaFormat()
+            // Broken until paperweight updates to a newer version of spotless (6.23.3+)
+//            palantirJavaFormat()
             formatAnnotations()
         }
         ratchetFrom("origin/master")
