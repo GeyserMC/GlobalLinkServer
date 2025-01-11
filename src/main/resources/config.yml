@@ -12,3 +12,5 @@ util:
   void-teleport: true
   prevent-hunger: true
   respawn-on-join: true
+  hide-player-count: true
+  disable-recipe-discover: true

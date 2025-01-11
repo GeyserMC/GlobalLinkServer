@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -27,6 +28,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRecipeDiscoverEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -180,5 +182,18 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerChat(AsyncChatEvent event) {
         if (config.util().disableChat()) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onServerListPing(PaperServerListPingEvent event) {
+        if (!config.util().hidePlayerCount()) return;
+        event.getListedPlayers().clear();
+        event.setNumPlayers(0);
+        event.setMaxPlayers(1);
+    }
+
+    @EventHandler
+    public void onPlayerRecipeDiscover(PlayerRecipeDiscoverEvent event) {
+        if (config.util().disableRecipeDiscover()) event.setCancelled(true);
     }
 }

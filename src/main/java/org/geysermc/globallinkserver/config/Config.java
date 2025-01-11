@@ -23,6 +23,8 @@ public record Config(
             boolean disableChat,
             boolean voidTeleport,
             boolean preventHunger,
-            boolean respawnOnJoin
+            boolean respawnOnJoin,
+            boolean hidePlayerCount,
+            boolean disableRecipeDiscover
     ) {}
 }

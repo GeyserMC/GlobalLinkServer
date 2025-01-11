@@ -29,7 +29,9 @@ public class ConfigReader {
                 util.getBoolean("disable-chat"),
                 util.getBoolean("void-teleport"),
                 util.getBoolean("prevent-hunger"),
-                util.getBoolean("respawn-on-join")
+                util.getBoolean("respawn-on-join"),
+                util.getBoolean("hide-player-count"),
+                util.getBoolean("disable-recipe-discover")
         ));
     }
 }
