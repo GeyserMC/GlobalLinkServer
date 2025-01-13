@@ -19,6 +19,9 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.GameRule;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -108,6 +111,22 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
             );
         });
 
+        // Set game rules
+        World world = getServer().getWorld("world");
+        world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+        world.setGameRule(GameRule.FALL_DAMAGE, false);
+        world.setGameRule(GameRule.DO_IMMEDIATE_RESPAWN, true);
+        world.setGameRule(GameRule.RANDOM_TICK_SPEED, 0);
+        world.setGameRule(GameRule.SHOW_DEATH_MESSAGES, false);
+
+        // Make nighttime
+        world.setTime(18000);
+
+        getServer().setDefaultGameMode(GameMode.ADVENTURE);
+
         LOGGER.info("Started Global Linking Server plugin!");
     }
 
@@ -135,30 +154,29 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerLoad(PlayerJoinEvent event) {
-        if (config.util().hideJoinLeaveMessages()) event.joinMessage(null);
+        event.joinMessage(null);
+
+        event.getPlayer().setPersistent(false);
+        event.getPlayer().setAllowFlight(true);
+
+        // Hide all players from each other
+        Bukkit.getOnlinePlayers().forEach(player -> {
+            event.getPlayer().hidePlayer(this, player);
+            player.hidePlayer(this, event.getPlayer());
+        });
+
         Utils.processJoin(event.getPlayer());
-
-        if (config.util().hidePlayers()) {
-            Bukkit.getOnlinePlayers().forEach(player -> {
-                event.getPlayer().hidePlayer(this, player);
-                player.hidePlayer(this, event.getPlayer());
-            });
-        }
-
-        if (config.util().respawnOnJoin()) Utils.fakeRespawn(event.getPlayer());
     }
 
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event) {
-        if (config.util().hideJoinLeaveMessages()) event.quitMessage(null);
+        event.quitMessage(null);
         Utils.processLeave(event.getPlayer());
     }
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (config.util().voidTeleport()
-            && event.getEntity() instanceof Player player
-            && event.getCause() == EntityDamageEvent.DamageCause.VOID) {
+        if (event.getCause() == EntityDamageEvent.DamageCause.VOID && event.getEntity() instanceof Player player) {
             event.setCancelled(true);
 
             Utils.fakeRespawn(player);
@@ -167,26 +185,23 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
-        if (config.util().preventHunger()) {
-            if (event.getFoodLevel() < event.getEntity().getFoodLevel()) {
-                event.setCancelled(true);
-            }
+        if (event.getFoodLevel() < event.getEntity().getFoodLevel()) {
+            event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
-        if (config.util().hideDeathMessages()) event.deathMessage(null);
+        event.deathMessage(null);
     }
 
     @EventHandler
     public void onPlayerChat(AsyncChatEvent event) {
-        if (config.util().disableChat()) event.setCancelled(true);
+        event.setCancelled(true);
     }
 
     @EventHandler
     public void onServerListPing(PaperServerListPingEvent event) {
-        if (!config.util().hidePlayerCount()) return;
         event.getListedPlayers().clear();
         event.setNumPlayers(0);
         event.setMaxPlayers(1);
@@ -194,6 +209,6 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerRecipeDiscover(PlayerRecipeDiscoverEvent event) {
-        if (config.util().disableRecipeDiscover()) event.setCancelled(true);
+        event.setCancelled(true);
     }
 }

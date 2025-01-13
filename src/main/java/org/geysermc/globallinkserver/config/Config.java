@@ -6,25 +6,12 @@
 package org.geysermc.globallinkserver.config;
 
 public record Config(
-    Database database,
-    Util util
+    Database database
 ) {
     public record Database(
             String hostname,
             String username,
             String password,
             String database
-    ) {}
-
-    public record Util(
-            boolean hideJoinLeaveMessages,
-            boolean hideDeathMessages,
-            boolean hidePlayers,
-            boolean disableChat,
-            boolean voidTeleport,
-            boolean preventHunger,
-            boolean respawnOnJoin,
-            boolean hidePlayerCount,
-            boolean disableRecipeDiscover
     ) {}
 }

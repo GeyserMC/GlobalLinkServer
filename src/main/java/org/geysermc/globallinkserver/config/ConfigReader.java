@@ -15,23 +15,12 @@ public class ConfigReader {
         plugin.saveConfig();
 
         var database = config.getConfigurationSection("database");
-        var util = config.getConfigurationSection("util");
 
         return new Config(new Config.Database(
                 database.getString("hostname"),
                 database.getString("username"),
                 database.getString("password"),
                 database.getString("database")
-        ), new Config.Util(
-                util.getBoolean("hide-join-leave-messages"),
-                util.getBoolean("hide-death-messages"),
-                util.getBoolean("hide-players"),
-                util.getBoolean("disable-chat"),
-                util.getBoolean("void-teleport"),
-                util.getBoolean("prevent-hunger"),
-                util.getBoolean("respawn-on-join"),
-                util.getBoolean("hide-player-count"),
-                util.getBoolean("disable-recipe-discover")
         ));
     }
 }
