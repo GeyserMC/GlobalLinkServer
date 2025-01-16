@@ -27,6 +27,13 @@ jobs:
           arguments: build
           cache-read-only: ${{ github.ref_name != 'master' && github.ref_name != 'development' }}
 
+      - name: Archive Artifacts
+        uses: GeyserMC/actions/upload-multi-artifact@master
+        if: success()
+        with:
+          artifacts: |
+            GlobalLinkPlugin:build/libs/GlobalLinkPlugin.jar
+
       - name: Notify Discord
         if: ${{ (success() || failure()) && github.repository == 'GeyserMC/GlobalLinkServer' }}
         uses: Tim203/actions-git-discord-webhook@main

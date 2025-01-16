@@ -10,7 +10,6 @@ group = "org.geysermc.globallinkserver"
 dependencies {
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
 
-    implementation(libs.gson) // newer version required for record support
     implementation(libs.bundles.fastutil)
     compileOnly(libs.floodgate.api)
     implementation(libs.mariadb.client)
@@ -59,7 +58,7 @@ tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 
-    archiveBaseName = "GlobalLinkServer"
+    archiveBaseName = "GlobalLinkPlugin"
     archiveVersion = ""
     archiveClassifier = ""
 }

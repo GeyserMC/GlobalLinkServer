@@ -1,5 +1,4 @@
 [versions]
-gson = "2.10.1"
 fastutil = "8.5.2"
 mariadb-client = "2.7.3"
 checker-qual = "3.21.1"
@@ -9,8 +8,6 @@ runpaper = "2.3.1"
 
 [libraries]
 floodgate-api = { group = "org.geysermc.floodgate", name = "api", version = "2.2.3-SNAPSHOT" }
-
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 
 fastutil-int-int-maps = { group = "com.nukkitx.fastutil", name = "fastutil-int-int-maps", version.ref = "fastutil" }
 fastutil-int-object-maps = { group = "com.nukkitx.fastutil", name = "fastutil-int-object-maps", version.ref = "fastutil" }

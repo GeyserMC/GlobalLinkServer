@@ -145,7 +145,7 @@ public class LinkManager {
                 () -> {
                     try (Connection connection = dataSource.getConnection()) {
                         try (PreparedStatement query = connection.prepareStatement(
-                                "SELECT `bedrock_id` FROM `links` WHERE `java_id` = ? LIMIT 1")) {
+                                "SELECT `bedrock_id` FROM `links` WHERE `java_id` = ?")) {
                             query.setString(1, player.getUniqueId().toString());
 
                             try (ResultSet resultSet = query.executeQuery()) {

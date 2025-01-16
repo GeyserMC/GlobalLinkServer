@@ -28,10 +28,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerCommandSendEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRecipeDiscoverEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -122,14 +119,19 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         world.setGameRule(GameRule.RANDOM_TICK_SPEED, 0);
         world.setGameRule(GameRule.SHOW_DEATH_MESSAGES, false);
 
+        // Other changes
+        getServer().motd(Component.text("Global Link Server").color(NamedTextColor.AQUA));
+        getServer().clearRecipes();
+
         // Make nighttime
         world.setTime(18000);
 
         getServer().setDefaultGameMode(GameMode.ADVENTURE);
 
-        LOGGER.info("Started Global Linking Server plugin!");
+        LOGGER.info("Started Global Linking plugin!");
     }
 
+    // TODO does not remove commands
     @EventHandler
     public void onCommands(PlayerCommandSendEvent event) {
         Collection<String> toRemove = new ArrayList<>();
