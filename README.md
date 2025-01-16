@@ -1,8 +1,8 @@
 # GlobalLinkServer Plugin
 
-> **Warning**
-This repo contains the code for the Geyser Global Linking Server plugin. 
-If you want to just link your account, join link.geysermc.org on Minecraft Java or Bedrock.
+> [!IMPORTANT]
+> This repo contains the code for the Geyser Global Linking Server plugin.
+> If you want to just link your account, join link.geysermc.org on Minecraft Java or Bedrock.
 
 ### `server.properties`
 ```properties
