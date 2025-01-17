@@ -5,12 +5,18 @@
  */
 package org.geysermc.globallinkserver;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalCause;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -54,6 +60,22 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
     public final static Component UNLINK_INSTRUCTIONS = Component.text("You are currently linked. To unlink, use ").color(NamedTextColor.AQUA)
             .append(Component.text("`/unlink`", NamedTextColor.RED))
             .append(Component.text("."));
+
+    private final Cache<UUID, Instant> playerIdleCache = CacheBuilder.newBuilder()
+        .expireAfterWrite(5, TimeUnit.MINUTES)
+        .removalListener(removalNotification -> {
+            getLogger().info(removalNotification.getKey() + " was removed from the cache due to " + removalNotification.getCause());
+            if (removalNotification.wasEvicted() && removalNotification.getCause() == RemovalCause.EXPIRED) {
+                Player player = Bukkit.getPlayer((UUID)removalNotification.getKey());
+                if (player != null) {
+                    Bukkit.getScheduler().callSyncMethod(plugin, () -> {
+                        player.kick(Component.text("You have been idle for too long!"));
+                        return null;
+                    });
+                }
+            }
+        })
+        .build();
 
     @Override
     public void onEnable() {
@@ -137,6 +159,9 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         getServer().clearRecipes();
         getServer().setDefaultGameMode(GameMode.ADVENTURE);
 
+        // Clean up every 10 seconds (200 ticks)
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> playerIdleCache.cleanUp(), 0, 200);
+
         LOGGER.info("Started Global Linking plugin!");
     }
 
@@ -218,12 +243,15 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
             player.hidePlayer(this, event.getPlayer());
         });
 
+        playerIdleCache.put(event.getPlayer().getUniqueId(), Instant.now());
+
         Utils.processJoin(event.getPlayer());
     }
 
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event) {
         event.quitMessage(null);
+        playerIdleCache.invalidate(event.getPlayer().getUniqueId());
         Utils.processLeave(event.getPlayer());
     }
 
@@ -266,5 +294,14 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         event.getListedPlayers().clear();
         event.setNumPlayers(0);
         event.setMaxPlayers(1);
+    }
+
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        int diffX = event.getFrom().getBlockX() - event.getTo().getBlockX();
+        int diffY = event.getFrom().getBlockZ() - event.getTo().getBlockZ();
+        if (Math.abs(diffX) > 0 || Math.abs(diffY) > 0) {
+            playerIdleCache.put(event.getPlayer().getUniqueId(), Instant.now());
+        }
     }
 }
