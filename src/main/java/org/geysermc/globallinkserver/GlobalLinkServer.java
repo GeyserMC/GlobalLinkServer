@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import io.papermc.paper.command.brigadier.Commands;
-import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
@@ -48,9 +47,9 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
     public static List<String> permittedCommands;
     public static Plugin plugin;
 
-    public final static Component LINK_INSTRUCTIONS = Component.text("Run the ").color(NamedTextColor.AQUA)
+    public final static Component LINK_INSTRUCTIONS = Component.text("You are not linked. To link, run the ").color(NamedTextColor.AQUA)
             .append(Component.text("`/link`", NamedTextColor.GREEN))
-            .append(Component.text(" command to link your accounts.", NamedTextColor.AQUA));
+            .append(Component.text(" command.", NamedTextColor.AQUA));
 
     public final static Component UNLINK_INSTRUCTIONS = Component.text("You are currently linked. To unlink, use ").color(NamedTextColor.AQUA)
             .append(Component.text("`/unlink`", NamedTextColor.RED))
@@ -70,10 +69,12 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, linkManager::cleanupTempLinks, 0, 1);
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
             Bukkit.getOnlinePlayers().forEach(player -> {
-                if (Utils.isLinked(player)) {
-                    player.sendActionBar(UNLINK_INSTRUCTIONS);
-                } else {
-                    player.sendActionBar(LINK_INSTRUCTIONS);
+                if (Utils.shouldShowSuggestion(player)) {
+                    if (Utils.isLinked(player)) {
+                        player.sendActionBar(UNLINK_INSTRUCTIONS);
+                    } else {
+                        player.sendActionBar(LINK_INSTRUCTIONS);
+                    }
                 }
             });
         }, 10, 15);
@@ -86,7 +87,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
                     Commands.literal("link")
                             .requires(ctx -> ctx.getSender() instanceof Player)
                             .executes(commandUtils::startLink)
-                            .then(Commands.argument("code", IntegerArgumentType.integer())
+                            .then(Commands.argument("code", IntegerArgumentType.integer(1, 9999))
                                     .executes(commandUtils::linkWithCode)
                             )
                             .build(),
@@ -184,11 +185,19 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
         if (command.equalsIgnoreCase("help")) {
             event.setCancelled(true);
+
+            if (!Utils.shouldShowSuggestion(player)) {
+                player.sendMessage(Component.text("Your linking information is currently unavailable. Please wait!")
+                        .color(NamedTextColor.RED));
+                return;
+            }
+
             if (Utils.isLinked(player)) {
                 player.sendMessage(UNLINK_INSTRUCTIONS);
             } else {
                 player.sendMessage(LINK_INSTRUCTIONS);
             }
+            return;
         }
 
         if (!permittedCommands.contains(command)) {

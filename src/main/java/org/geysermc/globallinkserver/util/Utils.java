@@ -8,34 +8,42 @@ package org.geysermc.globallinkserver.util;
 import com.mojang.brigadier.context.CommandContext;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.globallinkserver.GlobalLinkServer;
 import org.geysermc.globallinkserver.link.Link;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("UnstableApiUsage")
 public class Utils {
 
     private static final Map<UUID, Link> linkedPlayers = new Object2ObjectOpenHashMap<>();
+    private static final Set<UUID> lookupInProcess = new ObjectOpenHashSet<>();
+
+    public static boolean shouldShowSuggestion(Player player) {
+        return !lookupInProcess.contains(player.getUniqueId());
+    }
 
     public static boolean isBedrockPlayerId(Player player) {
-        return FloodgateApi.getInstance().isFloodgateId(player.getUniqueId());
+        return player.getUniqueId().version() == 0;
     }
 
     public static boolean isLinked(Player player) {
         return linkedPlayers.containsKey(player.getUniqueId());
     }
 
-    public static @Nullable Link getLink(Player player) {
+    public static Link getLink(Player player) {
         return linkedPlayers.get(player.getUniqueId());
     }
 
@@ -44,32 +52,36 @@ public class Utils {
     }
 
     public static void processJoin(Player player) {
-        FloodgatePlayer floodgatePlayer = FloodgateApi.getInstance().getPlayer(player.getUniqueId());
-        if (floodgatePlayer == null) {
-            // Not dealing with a Bedrock player - now check if this Java player has a link
-            GlobalLinkServer.linkManager.attemptFindJavaLink(player).whenComplete((link, throwable) -> {
-                if (throwable != null) {
-                    player.sendMessage(Component.text("Failed to find Java link.").color(NamedTextColor.RED));
-                    throwable.printStackTrace();
-                    return;
-                }
+        lookupInProcess.add(player.getUniqueId());
 
-                link.ifPresent(value -> linkedPlayers.put(player.getUniqueId(), value));
-            });
+        FloodgatePlayer floodgatePlayer = FloodgateApi.getInstance().getPlayer(player.getUniqueId());
+        CompletableFuture<Optional<Link>> linkFuture;
+
+        if (floodgatePlayer != null) {
+            // Dealing with a Bedrock player
+            linkFuture = GlobalLinkServer.linkManager.attemptFindBedrockLink(player, floodgatePlayer.getUsername());
         } else {
-            // easy
-            if (floodgatePlayer.isLinked()) {
-                linkedPlayers.put(player.getUniqueId(), new Link()
-                        .javaUsername(player.getName())
-                        .javaId(player.getUniqueId())
-                        .bedrockUsername(floodgatePlayer.getUsername())
-                        .bedrockId(floodgatePlayer.getJavaUniqueId()));
-            }
+            linkFuture = GlobalLinkServer.linkManager.attemptFindJavaLink(player);
         }
+
+        // Handle the result of the lookup
+        linkFuture.whenComplete((link, throwable) -> handleLinkLookupResult(player, link, throwable));
+    }
+
+    private static void handleLinkLookupResult(Player player, Optional<Link> link, Throwable throwable) {
+        lookupInProcess.remove(player.getUniqueId());
+        if (throwable != null) {
+            player.sendMessage(Component.text("Failed to find current link!").color(NamedTextColor.RED));
+            throwable.printStackTrace();
+            return;
+        }
+
+        link.ifPresent(value -> linkedPlayers.put(player.getUniqueId(), value));
     }
 
     public static void processLeave(Player player) {
         linkedPlayers.remove(player.getUniqueId());
+        lookupInProcess.remove(player.getUniqueId());
     }
 
     public static void sendCurrentLinkInfo(Player player) {

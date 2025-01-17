@@ -13,6 +13,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.geysermc.globallinkserver.GlobalLinkServer;
+import org.geysermc.globallinkserver.link.Link;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.link.TempLink;
 
@@ -111,7 +112,8 @@ public class CommandUtils {
     public int unlink(CommandContext<CommandSourceStack> ctx) {
         Player player = getPlayer(ctx);
 
-        if (!Utils.isLinked(player)) {
+        Link currentLink = Utils.getLink(player);
+        if (currentLink == null) {
             player.sendMessage(Component.text("You are not currently linked!").color(NamedTextColor.RED));
             return 0;
         }
@@ -119,7 +121,6 @@ public class CommandUtils {
         linkManager.unlinkAccount(player).whenComplete((result, error) -> {
             if (error != null) {
                 error.printStackTrace();
-                System.out.println(result);
                 player.sendMessage(Component.text("An unknown error occurred while unlinking your account. Try it again later!")
                         .color(NamedTextColor.RED));
                 return;
@@ -128,7 +129,14 @@ public class CommandUtils {
             Bukkit.getScheduler().callSyncMethod(GlobalLinkServer.plugin, () -> {
                 if (result) {
                     player.kick(Component.text("You are successfully unlinked.").color(NamedTextColor.GREEN));
+
+                    // Lookup whether the player's link is online, kick em too
+                    Player otherLink = Bukkit.getServer().getPlayer(currentLink.getOpposed(player));
+                    if (otherLink != null) {
+                        otherLink.kick(Component.text("You are successfully unlinked.").color(NamedTextColor.GREEN));
+                    }
                 } else {
+                    // Technically impossible
                     player.kick(Component.text("You are not linked to any account!").color(NamedTextColor.RED));
                 }
                 

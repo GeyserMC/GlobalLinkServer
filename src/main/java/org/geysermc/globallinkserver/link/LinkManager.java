@@ -123,7 +123,7 @@ public class LinkManager {
                     try (Connection connection = dataSource.getConnection()) {
 
                         PreparedStatement query;
-                        if (Utils.isBedrockPlayerId(player)) { // Should never happen
+                        if (Utils.isBedrockPlayerId(player)) {
                             query = connection.prepareStatement("DELETE FROM `links` WHERE `bedrock_id` = ?;");
                             query.setLong(1, player.getUniqueId().getLeastSignificantBits());
                         } else {
@@ -141,34 +141,68 @@ public class LinkManager {
     }
 
     public CompletableFuture<Optional<Link>> attemptFindJavaLink(Player player) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                    try (Connection connection = dataSource.getConnection()) {
-                        try (PreparedStatement query = connection.prepareStatement(
-                                "SELECT `bedrock_id` FROM `links` WHERE `java_id` = ?")) {
-                            query.setString(1, player.getUniqueId().toString());
-
-                            try (ResultSet resultSet = query.executeQuery()) {
-                                if (resultSet.next()) {
-                                    long bedrockId = resultSet.getLong("bedrock_id");
-                                    String bedrockTag = FloodgateApi.getInstance().getGamertagFor(bedrockId).join();
-                                    return Optional.of(
-                                            new Link(player)
-                                                    .bedrockId(new UUID(0, bedrockId))
-                                                    .bedrockUsername(bedrockTag)
-                                    );
-                                } else {
-                                    return Optional.empty(); // No match found
-                                }
-                            }
-                        }
-                    } catch (SQLException exception) {
-                        throw new CompletionException("Error while finding Java link", exception);
-                    }
-                },
-                executorService);
+        return attemptFindLink(
+                "SELECT `bedrock_id` FROM `links` WHERE `java_id` = ?",
+                stmt -> stmt.setString(1, player.getUniqueId().toString()),
+                resultSet -> {
+                    long bedrockId = resultSet.getLong("bedrock_id");
+                    String bedrockTag = FloodgateApi.getInstance().getGamertagFor(bedrockId).join();
+                    return Optional.of(Link.createFromJavaPlayer(player)
+                            .bedrockId(new UUID(0, bedrockId))
+                            .bedrockUsername(bedrockTag));
+                }
+        );
     }
 
+    public CompletableFuture<Optional<Link>> attemptFindBedrockLink(Player player, String bedrockTag) {
+        return attemptFindLink(
+                "SELECT `java_id`, `java_name` FROM `links` WHERE `bedrock_id` = ?",
+                stmt -> stmt.setLong(1, player.getUniqueId().getLeastSignificantBits()),
+                resultSet -> {
+                    UUID javaId = UUID.fromString(resultSet.getString("java_id"));
+                    String javaName = resultSet.getString("java_name");
+                    return Optional.of(new Link()
+                            .bedrockId(player.getUniqueId())
+                            .bedrockUsername(bedrockTag)
+                            .javaId(javaId)
+                            .javaUsername(javaName));
+                }
+        );
+    }
+
+    private CompletableFuture<Optional<Link>> attemptFindLink(
+            String query,
+            ThrowingConsumer<PreparedStatement> parameterSetter,
+            ThrowingFunction<ResultSet, Optional<Link>> resultProcessor
+    ) {
+        return CompletableFuture.supplyAsync(() -> {
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement queryStmt = connection.prepareStatement(query)) {
+                parameterSetter.accept(queryStmt);
+
+                try (ResultSet resultSet = queryStmt.executeQuery()) {
+                    if (resultSet.next()) {
+                        return resultProcessor.apply(resultSet);
+                    } else {
+                        return Optional.empty();
+                    }
+                }
+
+            } catch (SQLException exception) {
+                throw new CompletionException("Error while finding link! ", exception);
+            }
+        }, executorService);
+    }
+
+    @FunctionalInterface
+    interface ThrowingConsumer<T> {
+        void accept(T t) throws SQLException;
+    }
+
+    @FunctionalInterface
+    interface ThrowingFunction<T, R> {
+        R apply(T t) throws SQLException;
+    }
 
     public void cleanupTempLinks() {
         IntSet removedLinks = new IntArraySet();

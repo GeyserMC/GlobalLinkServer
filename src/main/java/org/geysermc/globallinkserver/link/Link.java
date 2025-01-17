@@ -18,9 +18,10 @@ public class Link {
     public Link() {
     }
 
-    public Link(Player javaPlayer) {
-        this.javaId = javaPlayer.getUniqueId();
-        this.javaUsername = javaPlayer.getName();
+    public static Link createFromJavaPlayer(Player javaPlayer) {
+        return new Link()
+                .javaId(javaPlayer.getUniqueId())
+                .javaUsername(javaPlayer.getName());
     }
 
     public UUID bedrockId() {
@@ -57,5 +58,9 @@ public class Link {
     public Link bedrockUsername(String bedrockUsername) {
         this.bedrockUsername = bedrockUsername;
         return this;
+    }
+
+    public UUID getOpposed(Player player) {
+        return player.getUniqueId().equals(bedrockId) ? javaId : bedrockId;
     }
 }
