@@ -5,6 +5,7 @@
  */
 package org.geysermc.globallinkserver.util;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.text.Component;
@@ -47,7 +48,7 @@ public class CommandUtils {
     }
 
     public int linkWithCode(CommandContext<CommandSourceStack> ctx) {
-        int linkId = ctx.getArgument("code", Integer.class);
+        int linkId = IntegerArgumentType.getInteger(ctx, "code");
 
         Player player = getPlayer(ctx);
 

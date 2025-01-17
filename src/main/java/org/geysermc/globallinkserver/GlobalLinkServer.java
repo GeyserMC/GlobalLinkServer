@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -82,7 +83,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
                     Commands.literal("link")
                             .requires(ctx -> ctx.getSender() instanceof Player)
                             .executes(commandUtils::startLink)
-                            .then(Commands.argument("code", ArgumentTypes.integerRange())
+                            .then(Commands.argument("code", IntegerArgumentType.integer())
                                     .executes(commandUtils::linkWithCode)
                             )
                             .build(),
