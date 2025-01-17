@@ -44,6 +44,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
     public static Logger LOGGER;
     public static LinkManager linkManager;
     public static Config config;
+    public static List<String> permittedCommands;
 
     public final static Component LINK_INSTRUCTIONS = Component.text("Run the ").color(NamedTextColor.AQUA)
             .append(Component.text("`/link`", NamedTextColor.GREEN))
@@ -135,7 +136,6 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         LOGGER.info("Started Global Linking plugin!");
     }
 
-    // TODO does not remove commands
     @EventHandler
     public void onCommands(PlayerCommandSendEvent event) {
         Collection<String> toRemove = new ArrayList<>();
@@ -156,6 +156,23 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         }
 
         event.getCommands().removeAll(toRemove);
+        permittedCommands = event.getCommands().stream().toList();
+    }
+
+    @EventHandler
+    public void preCommand(PlayerCommandPreprocessEvent event) {
+        if (event.getPlayer().isOp()) {
+            return;
+        }
+
+        String command = event.getMessage();
+        if (command.startsWith("/")) {
+            command = command.substring(1);
+        }
+
+        if (!permittedCommands.contains(command)) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler
