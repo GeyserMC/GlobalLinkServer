@@ -121,16 +121,15 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         world.setGameRule(GameRule.RANDOM_TICK_SPEED, 0);
         world.setGameRule(GameRule.SHOW_DEATH_MESSAGES, false);
 
+        // Make nighttime
+        world.setTime(18000);
+
         // Other changes
         getServer().motd(Component.text("GeyserMC ").color(NamedTextColor.GREEN)
                 .append(Component.text("Link ").color(NamedTextColor.AQUA))
                 .append(Component.text("Server").color(NamedTextColor.WHITE)));
 
         getServer().clearRecipes();
-
-        // Make nighttime
-        world.setTime(18000);
-
         getServer().setDefaultGameMode(GameMode.ADVENTURE);
 
         LOGGER.info("Started Global Linking plugin!");
@@ -138,6 +137,10 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onCommands(PlayerCommandSendEvent event) {
+        if (event.getPlayer().isOp()) {
+            return;
+        }
+
         Collection<String> toRemove = new ArrayList<>();
         for (String command : event.getCommands()) {
             if (command.startsWith("link")) {
@@ -250,10 +253,5 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         event.getListedPlayers().clear();
         event.setNumPlayers(0);
         event.setMaxPlayers(1);
-    }
-
-    @EventHandler
-    public void onPlayerRecipeDiscover(PlayerRecipeDiscoverEvent event) {
-        event.setCancelled(true);
     }
 }
