@@ -25,6 +25,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -120,7 +121,10 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         world.setGameRule(GameRule.SHOW_DEATH_MESSAGES, false);
 
         // Other changes
-        getServer().motd(Component.text("Global Link Server").color(NamedTextColor.AQUA));
+        getServer().motd(Component.text("GeyserMC ").color(NamedTextColor.GREEN)
+                .append(Component.text("Link ").color(NamedTextColor.AQUA))
+                .append(Component.text("Server").color(NamedTextColor.WHITE)));
+
         getServer().clearRecipes();
 
         // Make nighttime
@@ -188,6 +192,14 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (event.getFoodLevel() < event.getEntity().getFoodLevel()) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        // Prevent crop trampling
+        if (event.getAction() == Action.PHYSICAL) {
             event.setCancelled(true);
         }
     }
