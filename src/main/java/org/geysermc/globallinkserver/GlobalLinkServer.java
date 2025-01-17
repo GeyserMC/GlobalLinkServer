@@ -50,7 +50,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
             .append(Component.text("`/link`", NamedTextColor.GREEN))
             .append(Component.text(" command to link your accounts.", NamedTextColor.AQUA));
 
-    public final static Component UNLINK_INSTRUCTIONS = Component.text("To unlink, use ").color(NamedTextColor.AQUA)
+    public final static Component UNLINK_INSTRUCTIONS = Component.text("You are currently linked. To unlink, use ").color(NamedTextColor.AQUA)
             .append(Component.text("`/unlink`", NamedTextColor.RED))
             .append(Component.text("."));
 
@@ -152,6 +152,10 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
                 continue;
             }
 
+            if (command.contains("help")) {
+                continue;
+            }
+
             toRemove.add(command);
         }
 
@@ -161,13 +165,23 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
     @EventHandler
     public void preCommand(PlayerCommandPreprocessEvent event) {
-        if (event.getPlayer().isOp()) {
+        Player player = event.getPlayer();
+        if (player.isOp()) {
             return;
         }
 
         String command = event.getMessage();
         if (command.startsWith("/")) {
             command = command.substring(1);
+        }
+
+        if (command.equalsIgnoreCase("help")) {
+            event.setCancelled(true);
+            if (Utils.isLinked(player)) {
+                player.sendMessage(UNLINK_INSTRUCTIONS);
+            } else {
+                player.sendMessage(LINK_INSTRUCTIONS);
+            }
         }
 
         if (!permittedCommands.contains(command)) {
