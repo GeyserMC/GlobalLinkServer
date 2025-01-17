@@ -46,6 +46,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
     public static LinkManager linkManager;
     public static Config config;
     public static List<String> permittedCommands;
+    public static Plugin plugin;
 
     public final static Component LINK_INSTRUCTIONS = Component.text("Run the ").color(NamedTextColor.AQUA)
             .append(Component.text("`/link`", NamedTextColor.GREEN))
@@ -58,6 +59,8 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         LOGGER = getLogger();
+
+        plugin = this;
 
         config = ConfigReader.readConfig(this);
 

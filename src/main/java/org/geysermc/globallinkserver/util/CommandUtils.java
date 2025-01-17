@@ -12,6 +12,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.geysermc.globallinkserver.GlobalLinkServer;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.link.TempLink;
 
@@ -92,13 +93,17 @@ public class CommandUtils {
             Player javaPlayer = Bukkit.getPlayer(tempLink.javaId());
             Player bedrockPlayer = Bukkit.getPlayer(tempLink.bedrockId());
 
-            if (javaPlayer != null) {
-                javaPlayer.kick(Component.text("You are now successfully linked! :)").color(NamedTextColor.GREEN));
-            }
+            Bukkit.getScheduler().callSyncMethod(GlobalLinkServer.plugin, () -> {
+                if (javaPlayer != null) {
+                    javaPlayer.kick(Component.text("You are now successfully linked! :)").color(NamedTextColor.GREEN));
+                }
 
-            if (bedrockPlayer != null) {
-                bedrockPlayer.kick(Component.text("You are now successfully linked! :)").color(NamedTextColor.GREEN));
-            }
+                if (bedrockPlayer != null) {
+                    bedrockPlayer.kick(Component.text("You are now successfully linked! :)").color(NamedTextColor.GREEN));
+                }
+
+                return null;
+            });
         });
         return 1;
     }
@@ -120,11 +125,15 @@ public class CommandUtils {
                 return;
             }
 
-            if (result) {
-                player.kick(Component.text("You are successfully unlinked.").color(NamedTextColor.GREEN));
-            } else {
-                player.kick(Component.text("You are not linked to any account!").color(NamedTextColor.RED));
-            }
+            Bukkit.getScheduler().callSyncMethod(GlobalLinkServer.plugin, () -> {
+                if (result) {
+                    player.kick(Component.text("You are successfully unlinked.").color(NamedTextColor.GREEN));
+                } else {
+                    player.kick(Component.text("You are not linked to any account!").color(NamedTextColor.RED));
+                }
+                
+                return null;
+            });
         });
         return 1;
     }
