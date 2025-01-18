@@ -26,7 +26,7 @@ import org.jspecify.annotations.Nullable;
 
 @NullMarked
 public class LinkManager {
-    private static final int PENDING_LINK_DURATION = 60_000 * 15; // 15 min
+    private static final int PENDING_LINK_TTL_MILLIS = 15 * 60 * 1000; // 15 min
 
     private final PlayerManager playerManager;
     private final DatabaseManager database;
@@ -46,7 +46,7 @@ public class LinkManager {
     }
 
     public int createTempLink(Player player) {
-        var linkRequest = new LinkRequest(createCode(), PENDING_LINK_DURATION, player);
+        var linkRequest = new LinkRequest(createCode(), PENDING_LINK_TTL_MILLIS, player);
 
         linkRequests.put(linkRequest.code(), linkRequest);
         linkRequestForPlayer.put(player.getUniqueId(), linkRequest.code());
@@ -73,15 +73,25 @@ public class LinkManager {
 
     private boolean isLinkValid(@Nullable LinkRequest link) {
         long currentMillis = System.currentTimeMillis();
-        return link != null && currentMillis - link.expiryTime() < PENDING_LINK_DURATION;
+        return link != null && currentMillis < link.expiryTime();
     }
 
     public boolean removeActiveLinkRequest(Player player) {
-        int linkId = linkRequestForPlayer.removeInt(player.getUniqueId());
-        if (linkId != -1) {
-            linkRequests.remove(linkId);
+        int code = linkRequestForPlayer.removeInt(player.getUniqueId());
+        if (code != -1) {
+            linkRequests.remove(code);
         }
-        return linkId != -1;
+        return code != -1;
+    }
+
+    public boolean hasActiveLinkRequest(UUID uuid) {
+        int code = linkRequestForPlayer.getInt(uuid);
+        if (code == -1) {
+            return false;
+        }
+        var request = linkRequests.get(code);
+        //noinspection ConstantValue ??
+        return request != null && isLinkValid(request);
     }
 
     public CompletableFuture<Boolean> finaliseLink(Link linkRequest) {
@@ -128,7 +138,7 @@ public class LinkManager {
                 database.executor());
     }
 
-    public void cleanupTempLinks() {
+    public void cleanupLinkRequests() {
         Iterator<LinkRequest> iterator = linkRequests.values().iterator();
 
         long ctm = System.currentTimeMillis();

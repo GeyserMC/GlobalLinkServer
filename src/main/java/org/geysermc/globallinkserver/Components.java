@@ -37,8 +37,10 @@ public final class Components {
     public static final Component LINK_ALREADY_LINKED = Component.text(
             "You are already linked! You need to unlink first before linking again.", NamedTextColor.RED);
     public static final Component LINK_CODE_INVALID_RANGE = Component.text("Invalid link code!", NamedTextColor.RED);
+    public static final Component LINK_REQUEST_REPLACED = Component.text(
+            "You already had an active link request, so your old request has been invalidated.", NamedTextColor.AQUA);
     public static final Component LINK_REQUEST_NOT_FOUND =
-            Component.text("Could not find the provided link. Is it expired?", NamedTextColor.RED);
+            Component.text("Could not find the provided link. Has it expired?", NamedTextColor.RED);
     public static final Component LINK_REQUEST_SAME_PLATFORM = Component.text(
                     "You can only link a Java account to a Bedrock account. ", NamedTextColor.RED)
             .append(Component.text("Try to start the linking process again!"));

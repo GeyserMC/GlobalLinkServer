@@ -10,9 +10,10 @@ group = "org.geysermc.globallinkserver"
 dependencies {
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
 
-    implementation(libs.bundles.fastutil)
     compileOnly(libs.floodgate.api)
     implementation(libs.mariadb.client)
+    implementation(libs.bundles.fastutil)
+
     compileOnly(libs.checker.qual)
 }
 

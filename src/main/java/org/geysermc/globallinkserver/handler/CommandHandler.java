@@ -50,8 +50,9 @@ public final class CommandHandler {
             return Command.SINGLE_SUCCESS;
         }
 
-        //todo use the boolean return and send a message that the active link request has been invalidated
-        linkManager.removeActiveLinkRequest(player);
+        if (linkManager.removeActiveLinkRequest(player)) {
+            player.sendMessage(Components.LINK_REQUEST_REPLACED);
+        }
 
         String code = String.format("%04d", linkManager.createTempLink(player));
         String otherPlatform = playerManager.isBedrockPlayer(player) ? "Java" : "Bedrock";

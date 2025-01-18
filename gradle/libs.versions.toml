@@ -1,19 +1,21 @@
 [versions]
-fastutil = "8.5.2"
+floodgate = "2.2.3-SNAPSHOT"
 mariadb-client = "2.7.3"
+fastutil = "8.5.2"
 checker-qual = "3.21.1"
+
 indra = "3.1.2"
 paperweight = "2.0.0-beta.12"
 runpaper = "2.3.1"
 
 [libraries]
-floodgate-api = { group = "org.geysermc.floodgate", name = "api", version = "2.2.3-SNAPSHOT" }
+floodgate-api = { group = "org.geysermc.floodgate", name = "api", version.ref = "floodgate" }
+mariadb-client = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb-client" }
 
 fastutil-int-int-maps = { group = "com.nukkitx.fastutil", name = "fastutil-int-int-maps", version.ref = "fastutil" }
 fastutil-int-object-maps = { group = "com.nukkitx.fastutil", name = "fastutil-int-object-maps", version.ref = "fastutil" }
 fastutil-object-int-maps = { group = "com.nukkitx.fastutil", name = "fastutil-object-int-maps", version.ref = "fastutil" }
 fastutil-object-object-maps = { group = "com.nukkitx.fastutil", name = "fastutil-object-object-maps", version.ref = "fastutil" }
-mariadb-client = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb-client" }
 
 checker-qual = { module = "org.checkerframework:checker-qual", version.ref = "checker-qual" }
 
