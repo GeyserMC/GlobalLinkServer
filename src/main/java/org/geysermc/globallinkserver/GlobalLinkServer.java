@@ -5,14 +5,6 @@
  */
 package org.geysermc.globallinkserver;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
-
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -22,8 +14,12 @@ import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.GameRule;
@@ -35,72 +31,82 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerCommandSendEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.geysermc.globallinkserver.config.Config;
+import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.globallinkserver.config.ConfigReader;
+import org.geysermc.globallinkserver.handler.JoinHandler;
 import org.geysermc.globallinkserver.link.LinkManager;
-import org.geysermc.globallinkserver.util.CommandUtils;
+import org.geysermc.globallinkserver.manager.DatabaseManager;
+import org.geysermc.globallinkserver.manager.PlayerManager;
+import org.geysermc.globallinkserver.service.LinkLookupService;
+import org.geysermc.globallinkserver.service.LinkInfoService;
+import org.geysermc.globallinkserver.handler.CommandHandler;
 import org.geysermc.globallinkserver.util.Utils;
 
 @SuppressWarnings("UnstableApiUsage")
 public class GlobalLinkServer extends JavaPlugin implements Listener {
-    public static Logger LOGGER;
-    public static LinkManager linkManager;
-    public static Config config;
-    public static List<String> permittedCommands;
-    public static Plugin plugin;
-
-    public final static Component LINK_INSTRUCTIONS = Component.text("You are not linked. To link, run the ").color(NamedTextColor.AQUA)
-            .append(Component.text("`/link`", NamedTextColor.GREEN))
-            .append(Component.text(" command.", NamedTextColor.AQUA));
-
-    public final static Component UNLINK_INSTRUCTIONS = Component.text("You are currently linked. To unlink, use ").color(NamedTextColor.AQUA)
-            .append(Component.text("`/unlink`", NamedTextColor.RED))
-            .append(Component.text("."));
+    private static final Set<String> PERMITTED_COMMANDS =
+            Set.of("link", "linkaccount", "linkinfo", "info", "unlink", "unlinkaccount", "help");
 
     private final Cache<UUID, Instant> playerIdleCache = CacheBuilder.newBuilder()
-        .expireAfterWrite(5, TimeUnit.MINUTES)
-        .removalListener(removalNotification -> {
-            getLogger().info(removalNotification.getKey() + " was removed from the cache due to " + removalNotification.getCause());
-            if (removalNotification.wasEvicted() && removalNotification.getCause() == RemovalCause.EXPIRED) {
-                Player player = Bukkit.getPlayer((UUID)removalNotification.getKey());
-                if (player != null) {
-                    Bukkit.getScheduler().callSyncMethod(plugin, () -> {
-                        player.kick(Component.text("You have been idle for too long!"));
-                        return null;
-                    });
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .<UUID, Instant>removalListener(notification -> {
+                if (notification.wasEvicted() && notification.getCause() == RemovalCause.EXPIRED) {
+                    Player player = Bukkit.getPlayer(notification.getKey());
+                    if (player != null) {
+                        Bukkit.getScheduler().callSyncMethod(this, () -> {
+                            player.kick(Components.KICK_IDLE);
+                            return null;
+                        });
+                    }
                 }
-            }
-        })
-        .build();
+            })
+            .build();
+
+    private LinkLookupService linkLookupService;
+    private LinkInfoService linkInfoService;
 
     @Override
     public void onEnable() {
-        LOGGER = getLogger();
+        var config = ConfigReader.readConfig(this);
 
-        plugin = this;
+        var playerManager = new PlayerManager(FloodgateApi.getInstance());
+        var databaseManager = new DatabaseManager(config);
+        var linkManager = new LinkManager(playerManager, databaseManager);
+        linkLookupService = new LinkLookupService(playerManager, databaseManager);
+        linkInfoService = new LinkInfoService(linkLookupService, playerManager);
 
-        config = ConfigReader.readConfig(this);
-
-        linkManager = new LinkManager(config);
-        CommandUtils commandUtils = new CommandUtils(linkManager);
+        var commandUtils = new CommandHandler(linkLookupService, linkInfoService, linkManager, playerManager, this);
 
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, linkManager::cleanupTempLinks, 0, 1);
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
-            Bukkit.getOnlinePlayers().forEach(player -> {
-                if (Utils.shouldShowSuggestion(player)) {
-                    if (Utils.isLinked(player)) {
-                        player.sendActionBar(UNLINK_INSTRUCTIONS);
-                    } else {
-                        player.sendActionBar(LINK_INSTRUCTIONS);
-                    }
-                }
-            });
-        }, 10, 15);
-        getServer().getPluginManager().registerEvents(this, this);
+
+        Bukkit.getScheduler()
+                .scheduleSyncRepeatingTask(
+                        this,
+                        () -> {
+                            Bukkit.getOnlinePlayers().forEach(player -> {
+                                if (linkLookupService.isLookupCompleted(player)) {
+                                    if (linkLookupService.isLinkedCached(player)) {
+                                        player.sendActionBar(Components.UNLINK_INSTRUCTION);
+                                    } else {
+                                        player.sendActionBar(Components.LINK_INSTRUCTION);
+                                    }
+                                }
+                            });
+                        },
+                        10,
+                        15);
+
+        var pluginManager = getServer().getPluginManager();
+        pluginManager.registerEvents(this, this);
+        pluginManager.registerEvents(new JoinHandler(linkLookupService, playerIdleCache, this), this);
 
         LifecycleEventManager<@NonNull Plugin> manager = this.getLifecycleManager();
         manager.registerEventHandler(LifecycleEvents.COMMANDS, event -> {
@@ -109,32 +115,28 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
                     Commands.literal("link")
                             .requires(ctx -> ctx.getSender() instanceof Player)
                             .executes(commandUtils::startLink)
-                            .then(Commands.argument("code", IntegerArgumentType.integer(1, 9999))
-                                    .executes(commandUtils::linkWithCode)
-                            )
+                            .then(Commands.argument("code", IntegerArgumentType.integer(0, 9999))
+                                    .executes(commandUtils::linkWithCode))
                             .build(),
                     "Use this command to link your Java and Bedrock account.",
-                    List.of("linkaccount")
-            );
+                    List.of("linkaccount"));
             commands.register(
                     Commands.literal("unlink")
                             .requires(ctx -> ctx.getSender() instanceof Player)
                             .executes(commandUtils::unlink)
                             .build(),
                     "Use this command to unlink your Java and Bedrock account.",
-                    List.of("unlinkaccount")
-            );
+                    List.of("unlinkaccount"));
             commands.register(
                     Commands.literal("linkinfo")
                             .requires(ctx -> ctx.getSender() instanceof Player)
                             .executes(ctx -> {
-                                Utils.sendCurrentLinkInfo(Utils.getPlayer(ctx));
+                                linkInfoService.sendCurrentLinkInfo(Utils.contextExecutor(ctx));
                                 return 1;
                             })
                             .build(),
                     "Use this command to show information whether you are currently linked.",
-                    List.of("info")
-            );
+                    List.of("info"));
         });
 
         // Set game rules
@@ -152,17 +154,15 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         world.setTime(18000);
 
         // Other changes
-        getServer().motd(Component.text("GeyserMC ").color(NamedTextColor.GREEN)
-                .append(Component.text("Link ").color(NamedTextColor.AQUA))
-                .append(Component.text("Server").color(NamedTextColor.WHITE)));
+        getServer().motd(Components.MOTD);
 
         getServer().clearRecipes();
         getServer().setDefaultGameMode(GameMode.ADVENTURE);
 
-        // Clean up every 10 seconds (200 ticks)
-        Bukkit.getScheduler().runTaskTimer(plugin, () -> playerIdleCache.cleanUp(), 0, 200);
+        // Clean up every 10 seconds
+        Bukkit.getScheduler().runTaskTimer(this, playerIdleCache::cleanUp, 0, 10 * 20);
 
-        LOGGER.info("Started Global Linking plugin!");
+        getLogger().info("Started Global Linking plugin!");
     }
 
     @EventHandler
@@ -171,29 +171,13 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
             return;
         }
 
-        Collection<String> toRemove = new ArrayList<>();
+        var toRemove = new ArrayList<String>();
         for (String command : event.getCommands()) {
-            if (command.startsWith("link")) {
-                continue;
+            if (!PERMITTED_COMMANDS.contains(command)) {
+                toRemove.add(command);
             }
-
-            if (command.startsWith("unlink")) {
-                continue;
-            }
-
-            if (command.contains("info")) {
-                continue;
-            }
-
-            if (command.contains("help")) {
-                continue;
-            }
-
-            toRemove.add(command);
         }
-
         event.getCommands().removeAll(toRemove);
-        permittedCommands = event.getCommands().stream().toList();
     }
 
     @EventHandler
@@ -211,48 +195,32 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         if (command.equalsIgnoreCase("help")) {
             event.setCancelled(true);
 
-            if (!Utils.shouldShowSuggestion(player)) {
-                player.sendMessage(Component.text("Your linking information is currently unavailable. Please wait!")
-                        .color(NamedTextColor.RED));
+            if (!linkLookupService.isLookupCompleted(player)) {
+                player.sendMessage(Components.LINK_INFO_UNAVAILABLE);
                 return;
             }
 
-            if (Utils.isLinked(player)) {
-                player.sendMessage(UNLINK_INSTRUCTIONS);
+            if (linkLookupService.isLinkedCached(player)) {
+                player.sendMessage(Components.UNLINK_INSTRUCTION);
             } else {
-                player.sendMessage(LINK_INSTRUCTIONS);
+                player.sendMessage(Components.LINK_INSTRUCTION);
             }
             return;
         }
 
-        if (!permittedCommands.contains(command)) {
-            event.setCancelled(true);
+        for (String permitted : PERMITTED_COMMANDS) {
+            if (command.startsWith(permitted)) {
+                return;
+            }
         }
-    }
-
-    @EventHandler
-    public void onPlayerLoad(PlayerJoinEvent event) {
-        event.joinMessage(null);
-
-        event.getPlayer().setPersistent(false);
-        event.getPlayer().setAllowFlight(true);
-
-        // Hide all players from each other
-        Bukkit.getOnlinePlayers().forEach(player -> {
-            event.getPlayer().hidePlayer(this, player);
-            player.hidePlayer(this, event.getPlayer());
-        });
-
-        playerIdleCache.put(event.getPlayer().getUniqueId(), Instant.now());
-
-        Utils.processJoin(event.getPlayer());
+        event.setCancelled(true);
     }
 
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event) {
         event.quitMessage(null);
         playerIdleCache.invalidate(event.getPlayer().getUniqueId());
-        Utils.processLeave(event.getPlayer());
+        linkLookupService.invalidate(event.getPlayer());
     }
 
     @EventHandler
@@ -298,6 +266,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
+        // todo player idle should not only depend on movement, also check for pending links
         int diffX = event.getFrom().getBlockX() - event.getTo().getBlockX();
         int diffY = event.getFrom().getBlockZ() - event.getTo().getBlockZ();
         if (Math.abs(diffX) > 0 || Math.abs(diffY) > 0) {

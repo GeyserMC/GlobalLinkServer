@@ -7,62 +7,50 @@ package org.geysermc.globallinkserver.link;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArraySet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.geysermc.floodgate.api.FloodgateApi;
-import org.geysermc.globallinkserver.config.Config;
-import org.geysermc.globallinkserver.util.Utils;
-import org.mariadb.jdbc.MariaDbPoolDataSource;
+import org.geysermc.globallinkserver.Components;
+import org.geysermc.globallinkserver.manager.DatabaseManager;
+import org.geysermc.globallinkserver.manager.PlayerManager;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
+@NullMarked
 public class LinkManager {
-    private static final int TEMP_LINK_DURATION = 60_000 * 15; // 15 min
-    private final Int2ObjectMap<TempLink> tempLinks = new Int2ObjectOpenHashMap<>();
+    private static final int PENDING_LINK_DURATION = 60_000 * 15; // 15 min
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(3);
-    private final MariaDbPoolDataSource dataSource;
+    private final PlayerManager playerManager;
+    private final DatabaseManager database;
+
+    private final Int2ObjectMap<LinkRequest> linkRequests = new Int2ObjectOpenHashMap<>();
+    private final Object2IntMap<UUID> linkRequestForPlayer = new Object2IntOpenHashMap<>() {
+        {
+            defaultReturnValue(-1);
+        }
+    };
 
     private final Random random = new Random();
-    private final HashMap<UUID, Integer> CURRENT_LINK_CODES = new HashMap<>();
 
-    public LinkManager(Config config) {
-        try {
-            Class.forName("org.mariadb.jdbc.Driver");
-            dataSource = new MariaDbPoolDataSource("jdbc:mariadb://" + config.database().hostname() + "/" + config.database().database()
-                    + "?user=" + config.database().username() + "&password=" + config.database().password() + "&minPoolSize=1&maxPoolSize=3");
-        } catch (ClassNotFoundException exception) {
-            throw new RuntimeException("Cannot find required class to load the MariaDB database");
-        }
+    public LinkManager(PlayerManager playerManager, DatabaseManager database) {
+        this.playerManager = playerManager;
+        this.database = database;
     }
 
     public int createTempLink(Player player) {
-        TempLink link = new TempLink();
-        if (Utils.isBedrockPlayerId(player)) {
-            link.bedrockId(player.getUniqueId());
-        } else {
-            link.javaId(player.getUniqueId());
-            link.javaUsername(player.getName());
-        }
-        link.expiryTime(System.currentTimeMillis() + TEMP_LINK_DURATION);
-        link.code(createCode());
+        var linkRequest = new LinkRequest(createCode(), PENDING_LINK_DURATION, player);
 
-        tempLinks.put(link.code(), link);
-        CURRENT_LINK_CODES.put(player.getUniqueId(), link.code());
-
-        return link.code();
+        linkRequests.put(linkRequest.code(), linkRequest);
+        linkRequestForPlayer.put(player.getUniqueId(), linkRequest.code());
+        return linkRequest.code();
     }
 
     private int createCode() {
@@ -70,7 +58,7 @@ public class LinkManager {
         while (code == -1) {
             code = random.nextInt(9999 + 1); // the bound is exclusive
 
-            TempLink link = tempLinks.get(code);
+            LinkRequest link = linkRequests.get(code);
             if (isLinkValid(link)) {
                 code = -1;
             }
@@ -78,52 +66,52 @@ public class LinkManager {
         return code;
     }
 
-    public TempLink tempLinkById(int linkId) {
-        TempLink link = tempLinks.remove(linkId);
+    public @Nullable LinkRequest linkRequestByCode(int code) {
+        LinkRequest link = linkRequests.remove(code);
         return isLinkValid(link) ? link : null;
     }
 
-    private boolean isLinkValid(TempLink link) {
+    private boolean isLinkValid(@Nullable LinkRequest link) {
         long currentMillis = System.currentTimeMillis();
-        return link != null && currentMillis - link.expiryTime() < TEMP_LINK_DURATION;
+        return link != null && currentMillis - link.expiryTime() < PENDING_LINK_DURATION;
     }
 
-    public void removeTempLinkIfPresent(Player player) {
-        Integer linkId = CURRENT_LINK_CODES.remove(player.getUniqueId());
-        if (linkId != null) {
-            tempLinks.remove((int) linkId);
+    public boolean removeActiveLinkRequest(Player player) {
+        int linkId = linkRequestForPlayer.removeInt(player.getUniqueId());
+        if (linkId != -1) {
+            linkRequests.remove(linkId);
         }
+        return linkId != -1;
     }
 
-    public CompletableFuture<Boolean> finaliseLink(TempLink tempLink) {
+    public CompletableFuture<Boolean> finaliseLink(Link linkRequest) {
         return CompletableFuture.supplyAsync(
                 () -> {
-                    try (Connection connection = dataSource.getConnection()) {
+                    try (Connection connection = database.connection()) {
                         try (PreparedStatement query = connection.prepareStatement(
                                 "INSERT INTO `links` (`java_id`, `bedrock_id`, `java_name`) VALUES (?, ?, ?) "
                                         + "ON DUPLICATE KEY UPDATE "
                                         + "`java_id` = VALUES(`java_id`),"
                                         + "`bedrock_id` = VALUES(`bedrock_id`),"
                                         + "`java_name` = VALUES(`java_name`);")) {
-                            query.setString(1, tempLink.javaId().toString());
-                            query.setLong(2, tempLink.bedrockId().getLeastSignificantBits());
-                            query.setString(3, tempLink.javaUsername());
+                            query.setString(1, linkRequest.javaId().toString());
+                            query.setLong(2, linkRequest.bedrockId());
+                            query.setString(3, linkRequest.javaUsername());
                             return query.executeUpdate() != 0;
                         }
                     } catch (SQLException exception) {
                         throw new CompletionException("Error while linking player", exception);
                     }
                 },
-                executorService);
+                database.executor());
     }
 
     public CompletableFuture<Boolean> unlinkAccount(Player player) {
         return CompletableFuture.supplyAsync(
                 () -> {
-                    try (Connection connection = dataSource.getConnection()) {
-
+                    try (Connection connection = database.connection()) {
                         PreparedStatement query;
-                        if (Utils.isBedrockPlayerId(player)) {
+                        if (playerManager.isBedrockPlayer(player)) {
                             query = connection.prepareStatement("DELETE FROM `links` WHERE `bedrock_id` = ?;");
                             query.setLong(1, player.getUniqueId().getLeastSignificantBits());
                         } else {
@@ -137,94 +125,23 @@ public class LinkManager {
                         throw new CompletionException("Error while unlinking player", exception);
                     }
                 },
-                executorService);
-    }
-
-    public CompletableFuture<Optional<Link>> attemptFindJavaLink(Player player) {
-        return attemptFindLink(
-                "SELECT `bedrock_id` FROM `links` WHERE `java_id` = ?",
-                stmt -> stmt.setString(1, player.getUniqueId().toString()),
-                resultSet -> {
-                    long bedrockId = resultSet.getLong("bedrock_id");
-                    String bedrockTag = FloodgateApi.getInstance().getGamertagFor(bedrockId).join();
-                    return Optional.of(Link.createFromJavaPlayer(player)
-                            .bedrockId(new UUID(0, bedrockId))
-                            .bedrockUsername(bedrockTag));
-                }
-        );
-    }
-
-    public CompletableFuture<Optional<Link>> attemptFindBedrockLink(Player player, String bedrockTag) {
-        return attemptFindLink(
-                "SELECT `java_id`, `java_name` FROM `links` WHERE `bedrock_id` = ?",
-                stmt -> stmt.setLong(1, player.getUniqueId().getLeastSignificantBits()),
-                resultSet -> {
-                    UUID javaId = UUID.fromString(resultSet.getString("java_id"));
-                    String javaName = resultSet.getString("java_name");
-                    return Optional.of(new Link()
-                            .bedrockId(player.getUniqueId())
-                            .bedrockUsername(bedrockTag)
-                            .javaId(javaId)
-                            .javaUsername(javaName));
-                }
-        );
-    }
-
-    private CompletableFuture<Optional<Link>> attemptFindLink(
-            String query,
-            ThrowingConsumer<PreparedStatement> parameterSetter,
-            ThrowingFunction<ResultSet, Optional<Link>> resultProcessor
-    ) {
-        return CompletableFuture.supplyAsync(() -> {
-            try (Connection connection = dataSource.getConnection();
-                 PreparedStatement queryStmt = connection.prepareStatement(query)) {
-                parameterSetter.accept(queryStmt);
-
-                try (ResultSet resultSet = queryStmt.executeQuery()) {
-                    if (resultSet.next()) {
-                        return resultProcessor.apply(resultSet);
-                    } else {
-                        return Optional.empty();
-                    }
-                }
-
-            } catch (SQLException exception) {
-                throw new CompletionException("Error while finding link! ", exception);
-            }
-        }, executorService);
-    }
-
-    @FunctionalInterface
-    interface ThrowingConsumer<T> {
-        void accept(T t) throws SQLException;
-    }
-
-    @FunctionalInterface
-    interface ThrowingFunction<T, R> {
-        R apply(T t) throws SQLException;
+                database.executor());
     }
 
     public void cleanupTempLinks() {
-        IntSet removedLinks = new IntArraySet();
-        Iterator<TempLink> iterator = tempLinks.values().iterator();
+        Iterator<LinkRequest> iterator = linkRequests.values().iterator();
 
         long ctm = System.currentTimeMillis();
         while (iterator.hasNext()) {
-            TempLink tempLink = iterator.next();
+            LinkRequest linkRequest = iterator.next();
 
-            if (ctm > tempLink.expiryTime()) {
-                removedLinks.add(tempLink.code());
+            if (ctm > linkRequest.expiryTime()) {
                 iterator.remove();
-            }
-        }
+                linkRequestForPlayer.remove(linkRequest.requesterUuid(), linkRequest.code());
 
-        for (Map.Entry<UUID, Integer> entry : CURRENT_LINK_CODES.entrySet()) {
-            if (removedLinks.contains((int) entry.getValue())) {
-                Player player = Bukkit.getPlayer(entry.getKey());
-                int currentLinkCode = CURRENT_LINK_CODES.remove(entry.getKey());
-                if (player != null) {
-                    player.sendMessage(Component.text("Your link (%s) has expired! Run the link account again if you need a new code.".formatted(currentLinkCode))
-                            .color(NamedTextColor.RED));
+                var requester = linkRequest.requester();
+                if (requester != null) {
+                    requester.sendMessage(Components.cleanupLinkRequestExpired(linkRequest.code()));
                 }
             }
         }
