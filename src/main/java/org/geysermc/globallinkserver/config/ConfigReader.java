@@ -5,22 +5,32 @@
  */
 package org.geysermc.globallinkserver.config;
 
+import java.util.Objects;
+import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public class ConfigReader {
-
     public static Config readConfig(JavaPlugin plugin) {
         plugin.saveDefaultConfig();
         var config = plugin.getConfig();
-        plugin.saveConfig();
 
-        var database = config.getConfigurationSection("database");
+        var databaseSection = Objects.requireNonNull(config.getConfigurationSection("database"));
 
-        return new Config(new Config.Database(
-                database.getString("hostname"),
-                database.getString("username"),
-                database.getString("password"),
-                database.getString("database")
-        ));
+        var database = new Config.Database(
+                databaseSection.getString("hostname"),
+                databaseSection.getString("username"),
+                databaseSection.getString("password"),
+                databaseSection.getString("database"));
+
+        var locationSection = Objects.requireNonNull(config.getConfigurationSection("spawn"));
+        var spawnLocation = Location.deserialize(locationSection.getValues(false));
+
+        if (!spawnLocation.isWorldLoaded()) {
+            throw new IllegalArgumentException("World %s is not loaded".formatted(locationSection.getString("world")));
+        }
+
+        return new Config(database, spawnLocation);
     }
 }

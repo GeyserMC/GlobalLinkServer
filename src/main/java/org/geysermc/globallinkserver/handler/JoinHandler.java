@@ -29,7 +29,7 @@ public final class JoinHandler implements Listener {
     }
 
     @EventHandler
-    public void onPlayerLoad(PlayerJoinEvent event) {
+    public void onPlayerJoin(PlayerJoinEvent event) {
         var player = event.getPlayer();
         event.joinMessage(null);
 

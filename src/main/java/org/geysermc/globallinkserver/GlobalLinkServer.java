@@ -23,7 +23,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -38,6 +37,7 @@ import org.geysermc.globallinkserver.config.ConfigReader;
 import org.geysermc.globallinkserver.handler.CommandHandler;
 import org.geysermc.globallinkserver.handler.JoinHandler;
 import org.geysermc.globallinkserver.handler.MoveInactivityHandler;
+import org.geysermc.globallinkserver.handler.TeleportToSpawnHandler;
 import org.geysermc.globallinkserver.link.LinkManager;
 import org.geysermc.globallinkserver.manager.DatabaseManager;
 import org.geysermc.globallinkserver.manager.PlayerManager;
@@ -85,6 +85,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         pluginManager.registerEvents(this, this);
         pluginManager.registerEvents(new JoinHandler(linkLookupService, playerIdleTracker, this), this);
         pluginManager.registerEvents(new MoveInactivityHandler(playerIdleTracker), this);
+        pluginManager.registerEvents(new TeleportToSpawnHandler(config.spawn()), this);
 
         // if the player has an active link request, don't kick the player
         playerIdleTracker.addRemovalCondition(uuid -> !linkManager.hasActiveLinkRequest(uuid));
@@ -121,7 +122,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         });
 
         // Set game rules
-        World world = getServer().getWorld("world");
+        World world = config.spawn().getWorld();
         world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
@@ -216,14 +217,6 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         event.quitMessage(null);
         playerIdleTracker.remove(event.getPlayer().getUniqueId());
         linkLookupService.invalidate(event.getPlayer());
-    }
-
-    @EventHandler
-    public void onEntityDamage(EntityDamageEvent event) {
-        if (event.getCause() == EntityDamageEvent.DamageCause.VOID && event.getEntity() instanceof Player player) {
-            event.setCancelled(true);
-            Utils.fakeRespawn(player);
-        }
     }
 
     @EventHandler

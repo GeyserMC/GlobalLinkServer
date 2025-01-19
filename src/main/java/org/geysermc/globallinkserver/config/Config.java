@@ -5,8 +5,11 @@
  */
 package org.geysermc.globallinkserver.config;
 
+import org.bukkit.Location;
+
 public record Config(
-    Database database
+    Database database,
+    Location spawn
 ) {
     public record Database(
             String hostname,

@@ -3,6 +3,7 @@
 > [!IMPORTANT]
 > This repo contains the code for the Geyser Global Linking Server plugin.
 > If you want to just link your account, join link.geysermc.org on Minecraft Java or Bedrock.
+> For more information visit https://link.geysermc.org/
 
 ### `server.properties`
 ```properties

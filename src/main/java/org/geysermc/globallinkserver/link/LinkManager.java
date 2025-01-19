@@ -25,7 +25,7 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 @NullMarked
-public class LinkManager {
+public final class LinkManager {
     private static final int PENDING_LINK_TTL_MILLIS = 15 * 60 * 1000; // 15 min
 
     private final PlayerManager playerManager;
