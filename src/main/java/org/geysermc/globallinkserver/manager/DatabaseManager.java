@@ -41,7 +41,7 @@ public final class DatabaseManager {
             dataSource.setUser(config.database().username());
             dataSource.setPassword(config.database().password());
             dataSource.setMinPoolSize(1);
-            dataSource.setMaxPoolSize(3);
+            dataSource.setMaxPoolSize(config.database().maxPoolSize());
 
         } catch (ClassNotFoundException exception) {
             throw new RuntimeException("Cannot find required class to load the MariaDB database");

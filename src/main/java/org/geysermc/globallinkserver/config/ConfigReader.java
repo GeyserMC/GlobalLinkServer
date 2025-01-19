@@ -22,7 +22,8 @@ public class ConfigReader {
                 databaseSection.getString("hostname"),
                 databaseSection.getString("username"),
                 databaseSection.getString("password"),
-                databaseSection.getString("database"));
+                databaseSection.getString("database"),
+                databaseSection.getInt("max-pool-size"));
 
         var locationSection = Objects.requireNonNull(config.getConfigurationSection("spawn"));
         var spawnLocation = Location.deserialize(locationSection.getValues(false));

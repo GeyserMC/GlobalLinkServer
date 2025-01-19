@@ -15,6 +15,7 @@ public record Config(
             String hostname,
             String username,
             String password,
-            String database
+            String database,
+            int maxPoolSize
     ) {}
 }
