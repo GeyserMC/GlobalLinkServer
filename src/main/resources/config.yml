@@ -3,6 +3,7 @@ database:
   username: global_link
   password: some_pass
   database: global_link_dev
+  max-pool-size: 3
 
 spawn:
   world: world
