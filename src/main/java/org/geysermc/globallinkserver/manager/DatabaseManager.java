@@ -16,7 +16,7 @@ import org.mariadb.jdbc.MariaDbPoolDataSource;
 @NullMarked
 public final class DatabaseManager {
     private final MariaDbPoolDataSource dataSource;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(3);
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public DatabaseManager(Config config) {
         try {
