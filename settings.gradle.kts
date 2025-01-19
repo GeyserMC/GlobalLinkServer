@@ -1,17 +1,9 @@
 @file:Suppress("UnstableApiUsage")
 
-dependencyResolutionManagement {
-    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+pluginManagement {
     repositories {
-        mavenLocal()
-
-        maven("https://repo.opencollab.dev/main")
-
-        mavenCentral()
-
-        maven("https://jitpack.io") {
-            content { includeGroupByRegex("com\\.github\\..*") }
-        }
+        gradlePluginPortal()
+        maven("https://repo.papermc.io/repository/maven-public/")
     }
 }
 

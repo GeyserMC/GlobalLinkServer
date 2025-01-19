@@ -1,31 +1,20 @@
 plugins {
-    application
     alias(libs.plugins.indra)
     alias(libs.plugins.indra.licenser.spotless)
+    alias(libs.plugins.paperweight)
+    alias(libs.plugins.runpaper)
 }
 
 group = "org.geysermc.globallinkserver"
 
 dependencies {
-    implementation(libs.gson) // newer version required for record support
-    implementation(libs.fastutil.common)
+    paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
 
-    implementation(libs.bundles.protocol)
-    implementation(libs.mcprotocollib) {
-        exclude("io.netty", "netty-all")
-    }
-
-    // mcprotocollib won't work without this
-    implementation(libs.netty.handler)
-
-    implementation(libs.adventure.text.legacy)
+    compileOnly(libs.floodgate.api)
     implementation(libs.mariadb.client)
+    implementation(libs.bundles.fastutil)
 
     compileOnly(libs.checker.qual)
-}
-
-application {
-    mainClass.set("org.geysermc.globallinkserver.GlobalLinkServer")
 }
 
 indra {
@@ -38,27 +27,39 @@ indra {
     mitLicense()
 
     javaVersions {
-        target(17)
+        target(21)
     }
 
     spotless {
         java {
-            palantirJavaFormat()
+            // Broken until paperweight updates to a newer version of spotless (6.23.3+)
+//            palantirJavaFormat()
             formatAnnotations()
         }
         ratchetFrom("origin/master")
     }
 }
 
+repositories {
+    mavenLocal()
+
+    maven("https://repo.opencollab.dev/main")
+    maven("https://repo.papermc.io/repository/maven-public/")
+
+    mavenCentral()
+
+    maven("https://jitpack.io") {
+        content { includeGroupByRegex("com\\.github\\..*") }
+    }
+}
+
+paperweight.reobfArtifactConfiguration = io.papermc.paperweight.userdev.ReobfArtifactConfiguration.MOJANG_PRODUCTION
+
 tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 
-    archiveBaseName = "GlobalLinkServer"
+    archiveBaseName = "GlobalLinkPlugin"
     archiveVersion = ""
     archiveClassifier = ""
-
-    manifest {
-        attributes["Main-Class"] = application.mainClass
-    }
 }

@@ -1,0 +1,14 @@
+database:
+  hostname: 127.0.0.1
+  username: global_link
+  password: some_pass
+  database: global_link_dev
+  max-pool-size: 3
+
+spawn:
+  world: world
+  x: 0
+  y: 50
+  z: 0
+  yaw: -180
+  pitch: 0

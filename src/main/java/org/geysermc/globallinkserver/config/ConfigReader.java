@@ -1,46 +1,37 @@
 /*
- * Copyright (c) 2021-2024 GeyserMC
+ * Copyright (c) 2021-2025 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
 package org.geysermc.globallinkserver.config;
 
-import static org.geysermc.globallinkserver.GlobalLinkServer.LOGGER;
+import java.util.Objects;
+import org.bukkit.Location;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.jspecify.annotations.NullMarked;
 
-import com.google.gson.Gson;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
+@NullMarked
 public class ConfigReader {
-    private static final Gson GSON = new Gson();
-    private static final Path CONFIG_PATH = Paths.get("config.json");
+    public static Config readConfig(JavaPlugin plugin) {
+        plugin.saveDefaultConfig();
+        var config = plugin.getConfig();
 
-    public static Config readConfig() {
-        LOGGER.info("Reading config from " + CONFIG_PATH.toAbsolutePath());
-        String data = configContent();
-        if (data == null) {
-            createConfig();
+        var databaseSection = Objects.requireNonNull(config.getConfigurationSection("database"));
+
+        var database = new Config.Database(
+                databaseSection.getString("hostname"),
+                databaseSection.getString("username"),
+                databaseSection.getString("password"),
+                databaseSection.getString("database"),
+                databaseSection.getInt("max-pool-size"));
+
+        var locationSection = Objects.requireNonNull(config.getConfigurationSection("spawn"));
+        var spawnLocation = Location.deserialize(locationSection.getValues(false));
+
+        if (!spawnLocation.isWorldLoaded()) {
+            throw new IllegalArgumentException("World %s is not loaded".formatted(locationSection.getString("world")));
         }
-        data = configContent();
 
-        return GSON.fromJson(data, Config.class);
-    }
-
-    private static String configContent() {
-        try {
-            return Files.readString(CONFIG_PATH);
-        } catch (IOException exception) {
-            return null;
-        }
-    }
-
-    private static void createConfig() {
-        try {
-            Files.copy(ConfigReader.class.getResourceAsStream("/config.json"), CONFIG_PATH);
-        } catch (IOException exception) {
-            throw new RuntimeException("Failed to copy config", exception);
-        }
+        return new Config(database, spawnLocation);
     }
 }

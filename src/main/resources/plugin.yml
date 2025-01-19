@@ -1,0 +1,14 @@
+name: GlobalLinkServer
+version: '1.0'
+main: org.geysermc.globallinkserver.GlobalLinkServer
+description: GlobalLinkServer plugin
+api-version: '1.21.4'
+dependencies:
+  server:
+    floodgate:
+      load: OMIT
+      required: true
+    geyser:
+      load: OMIT
+      required: true
+      join-classpath: false
