@@ -31,7 +31,7 @@ public final class TeleportToSpawnHandler implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (event.getCause() == EntityDamageEvent.DamageCause.VOID && event.getEntity() instanceof Player player) {
+        if (event.getEntity() instanceof Player player) {
             event.setCancelled(true);
             teleport(player);
         }
