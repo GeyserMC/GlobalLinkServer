@@ -228,10 +228,8 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        // Prevent crop trampling
-        if (event.getAction() == Action.PHYSICAL) {
-            event.setCancelled(true);
-        }
+        // Prevent any kind of interaction
+        event.setCancelled(true);
     }
 
     @EventHandler
