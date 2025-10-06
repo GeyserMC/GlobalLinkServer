@@ -20,8 +20,6 @@ import org.bukkit.entity.Player;
 import org.geysermc.globallinkserver.link.FullLink;
 import org.geysermc.globallinkserver.manager.DatabaseManager;
 import org.geysermc.globallinkserver.manager.PlayerManager;
-import org.geysermc.globallinkserver.util.ThrowingConsumer;
-import org.geysermc.globallinkserver.util.ThrowingFunction;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -77,54 +75,58 @@ public final class LinkLookupService {
     }
 
     public CompletableFuture<@Nullable FullLink> findJavaLink(UUID javaId, String javaName) {
-        return attemptFindLink(
-                        "SELECT `bedrock_id` FROM `links` WHERE `java_id` = ?",
-                        stmt -> stmt.setString(1, javaId.toString()),
-                        resultSet -> resultSet.getLong("bedrock_id"))
-                .thenCompose(xuid -> {
-                    if (xuid == null) {
-                        return CompletableFuture.completedFuture(null);
-                    }
+        return CompletableFuture.supplyAsync(() -> {
+            try (Connection connection = database.connection();
+                 PreparedStatement statement = connection.prepareStatement("""
+                    SELECT xuid, gamertag
+                    FROM links
+                    LEFT JOIN xbox_identity_current USING (xuid)
+                    WHERE java_id = ?::uuid""")) {
 
-                    return playerManager.fetchGamertagFor(xuid).thenApply(gamertag -> {
-                        return new FullLink(new UUID(0, xuid), gamertag, javaId, javaName);
-                    });
-                });
+                statement.setString(1, javaId.toString());
+
+                try (ResultSet result = statement.executeQuery()) {
+                    if (!result.next()) {
+                        return null;
+                    }
+                    return new FullLink(
+                        new UUID(0, result.getLong("xuid")),
+                        result.getString("gamertag"),
+                        javaId,
+                        javaName);
+                }
+            } catch (SQLException exception) {
+                throw new CompletionException("Error while finding link! ", exception);
+            }
+        }, database.executor());
     }
 
     public CompletableFuture<@Nullable FullLink> findBedrockLink(UUID bedrockId, String gamertag) {
-        return attemptFindLink(
-                "SELECT `java_id`, `java_name` FROM `links` WHERE `bedrock_id` = ?",
-                stmt -> stmt.setLong(1, bedrockId.getLeastSignificantBits()),
-                resultSet -> {
-                    UUID javaId = UUID.fromString(resultSet.getString("java_id"));
-                    String javaName = resultSet.getString("java_name");
-                    return new FullLink(bedrockId, gamertag, javaId, javaName);
-                });
-    }
+        long xuid = bedrockId.getLeastSignificantBits();
 
-    private <T> CompletableFuture<T> attemptFindLink(
-            String query,
-            ThrowingConsumer<PreparedStatement> parameterSetter,
-            ThrowingFunction<ResultSet, T> resultProcessor) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                    try (Connection connection = database.connection();
-                            PreparedStatement queryStmt = connection.prepareStatement(query)) {
-                        parameterSetter.accept(queryStmt);
+        return CompletableFuture.supplyAsync(() -> {
+            try (Connection connection = database.connection();
+                 PreparedStatement statement = connection.prepareStatement("""
+                    SELECT java_id, username
+                    FROM links
+                    LEFT JOIN java_identity_current ON java_id = id
+                    WHERE xuid = ?::xuid""")) {
 
-                        try (ResultSet resultSet = queryStmt.executeQuery()) {
-                            if (resultSet.next()) {
-                                return resultProcessor.apply(resultSet);
-                            } else {
-                                return null;
-                            }
-                        }
+                statement.setLong(1, xuid);
 
-                    } catch (SQLException exception) {
-                        throw new CompletionException("Error while finding link! ", exception);
+                try (ResultSet result = statement.executeQuery()) {
+                    if (!result.next()) {
+                        return null;
                     }
-                },
-                database.executor());
+                    return new FullLink(
+                        new UUID(0, xuid),
+                        gamertag,
+                        UUID.fromString(result.getString("java_id")),
+                        result.getString("username"));
+                }
+            } catch (SQLException exception) {
+                throw new CompletionException("Error while finding link! ", exception);
+            }
+        }, database.executor());
     }
 }

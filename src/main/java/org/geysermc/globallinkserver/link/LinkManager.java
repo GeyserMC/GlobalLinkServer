@@ -12,6 +12,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.UUID;
@@ -46,7 +48,9 @@ public final class LinkManager {
     }
 
     public int createTempLink(Player player) {
-        var linkRequest = new LinkRequest(createCode(), PENDING_LINK_TTL_MILLIS, player);
+        long nameTimestamp = playerManager.nameTimestampMillis(player);
+        String correctUsername = playerManager.correctUsername(player);
+        var linkRequest = new LinkRequest(createCode(), PENDING_LINK_TTL_MILLIS, player.getUniqueId(), correctUsername, nameTimestamp);
 
         linkRequests.put(linkRequest.code(), linkRequest);
         linkRequestForPlayer.put(player.getUniqueId(), linkRequest.code());
@@ -98,15 +102,39 @@ public final class LinkManager {
         return CompletableFuture.supplyAsync(
                 () -> {
                     try (Connection connection = database.connection()) {
-                        try (PreparedStatement query = connection.prepareStatement(
-                                "INSERT INTO `links` (`java_id`, `bedrock_id`, `java_name`) VALUES (?, ?, ?) "
-                                        + "ON DUPLICATE KEY UPDATE "
-                                        + "`java_id` = VALUES(`java_id`),"
-                                        + "`bedrock_id` = VALUES(`bedrock_id`),"
-                                        + "`java_name` = VALUES(`java_name`);")) {
+                        try (PreparedStatement query = connection.prepareStatement("""
+                                INSERT INTO java_identity_current AS c(id, username, detected_at)
+                                VALUES (?::uuid, ?, ?)
+                                ON CONFLICT (id) DO
+                                  UPDATE SET username = EXCLUDED.username, detected_at = EXCLUDED.detected_at
+                                  WHERE c.detected_at <= EXCLUDED.detected_at AND c.username != EXCLUDED.username
+                                """)) {
                             query.setString(1, linkRequest.javaId().toString());
-                            query.setLong(2, linkRequest.bedrockId());
-                            query.setString(3, linkRequest.javaUsername());
+                            query.setString(2, linkRequest.javaUsername());
+                            query.setTimestamp(3, Timestamp.from(Instant.EPOCH.plusMillis(linkRequest.javaNameTimestamp())));
+                            query.executeUpdate();
+                        }
+
+                        try (PreparedStatement query = connection.prepareStatement("""
+                                INSERT INTO xbox_identity_current AS c(xuid, gamertag, detected_at)
+                                VALUES (?::xuid, ?, ?)
+                                ON CONFLICT (xuid) DO
+                                  UPDATE SET gamertag = EXCLUDED.gamertag, detected_at = EXCLUDED.detected_at
+                                  WHERE c.detected_at <= EXCLUDED.detected_at AND c.gamertag != EXCLUDED.gamertag
+                                """)) {
+                            query.setLong(1, linkRequest.bedrockId());
+                            query.setString(2, linkRequest.bedrockName());
+                            query.setTimestamp(3, Timestamp.from(Instant.EPOCH.plusMillis(linkRequest.bedrockNameTimestamp())));
+                            query.executeUpdate();
+                        }
+
+                        try (PreparedStatement query = connection.prepareStatement("""
+                                INSERT INTO links (xuid, java_id)
+                                VALUES (?::xuid, ?::uuid)
+                                ON CONFLICT (xuid) DO
+                                  UPDATE SET java_id = EXCLUDED.java_id, inserted_at = EXCLUDED.inserted_at""")) {
+                            query.setLong(1, linkRequest.bedrockId());
+                            query.setString(2, linkRequest.javaId().toString());
                             return query.executeUpdate() != 0;
                         }
                     } catch (SQLException exception) {
@@ -122,10 +150,10 @@ public final class LinkManager {
                     try (Connection connection = database.connection()) {
                         PreparedStatement query;
                         if (playerManager.isBedrockPlayer(player)) {
-                            query = connection.prepareStatement("DELETE FROM `links` WHERE `bedrock_id` = ?;");
+                            query = connection.prepareStatement("DELETE FROM links WHERE xuid = ?::xuid");
                             query.setLong(1, player.getUniqueId().getLeastSignificantBits());
                         } else {
-                            query = connection.prepareStatement("DELETE FROM `links` WHERE `java_id` = ?;");
+                            query = connection.prepareStatement("DELETE FROM links WHERE java_id = ?::uuid");
                             query.setString(1, player.getUniqueId().toString());
                         }
                         boolean affected = query.executeUpdate() != 0;

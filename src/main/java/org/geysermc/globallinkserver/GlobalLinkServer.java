@@ -22,7 +22,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -33,6 +32,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.floodgate.api.FloodgateApi;
+import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.globallinkserver.config.ConfigReader;
 import org.geysermc.globallinkserver.handler.CommandHandler;
 import org.geysermc.globallinkserver.handler.JoinHandler;
@@ -68,7 +68,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
     public void onEnable() {
         var config = ConfigReader.readConfig(this);
 
-        var playerManager = new PlayerManager(FloodgateApi.getInstance());
+        var playerManager = new PlayerManager(FloodgateApi.getInstance(), GeyserImpl.getInstance());
         var databaseManager = new DatabaseManager(config);
         var linkManager = new LinkManager(playerManager, databaseManager);
         linkLookupService = new LinkLookupService(playerManager, databaseManager);

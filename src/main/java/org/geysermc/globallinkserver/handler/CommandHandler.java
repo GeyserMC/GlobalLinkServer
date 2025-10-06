@@ -83,7 +83,8 @@ public final class CommandHandler {
             return Command.SINGLE_SUCCESS;
         }
 
-        var completedLink = Link.fromRequest(linkRequest, player.getUniqueId(), player.getName(), isRequesterBedrock);
+        String correctUsername = playerManager.correctUsername(player);
+        Link completedLink = Link.fromRequest(linkRequest, player.getUniqueId(), correctUsername, playerManager.nameTimestampMillis(player), isRequesterBedrock);
 
         linkManager.finaliseLink(completedLink).whenComplete((result, error) -> {
             if (error != null || !result) {

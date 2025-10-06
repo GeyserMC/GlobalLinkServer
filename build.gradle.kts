@@ -8,10 +8,12 @@ plugins {
 group = "org.geysermc.globallinkserver"
 
 dependencies {
-    paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
 
+    compileOnly(libs.geyser.core)
     compileOnly(libs.floodgate.api)
-    implementation(libs.mariadb.client)
+    implementation(libs.hikaricp)
+    implementation(libs.postgresql)
     implementation(libs.bundles.fastutil)
 
     compileOnly(libs.checker.qual)
