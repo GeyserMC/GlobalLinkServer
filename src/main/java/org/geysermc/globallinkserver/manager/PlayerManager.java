@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 GeyserMC
+ * Copyright (c) 2025-2026 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
@@ -36,7 +36,7 @@ public final class PlayerManager {
         return api.getPlayer(uuid);
     }
 
-    private @Nullable GeyserSession bedrockSession(Player player) {
+    public @Nullable GeyserSession bedrockSession(Player player) {
         // There is no linking in the linking server itself, only link management
         if (player.getUniqueId().getMostSignificantBits() != 0L) {
             return null;
@@ -57,26 +57,5 @@ public final class PlayerManager {
             return player.getName();
         }
         return floodgatePlayer.getUsername();
-    }
-
-    /**
-     * Returns the earliest known time that the profile has this name.
-     * Works for both Java and Bedrock accounts.
-     */
-    public long nameTimestampMillis(Player player) {
-        GeyserSession session = bedrockSession(player);
-        if (session == null) {
-            long timestamp = player.getPlayerProfile().getTextures().getTimestamp();
-            if (timestamp == 0L) {
-                return System.currentTimeMillis();
-            }
-            return timestamp;
-        }
-
-        long issuedAt = session.getAuthData().issuedAt();
-        if (issuedAt == -1) {
-            return System.currentTimeMillis();
-        }
-        return issuedAt * 1000L;
     }
 }

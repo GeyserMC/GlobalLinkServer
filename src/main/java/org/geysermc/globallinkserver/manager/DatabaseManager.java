@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 GeyserMC
+ * Copyright (c) 2025-2026 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */

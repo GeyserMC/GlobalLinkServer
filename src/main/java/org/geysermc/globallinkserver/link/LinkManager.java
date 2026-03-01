@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 GeyserMC
+ * Copyright (c) 2021-2026 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
@@ -12,8 +12,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.UUID;
@@ -48,9 +46,8 @@ public final class LinkManager {
     }
 
     public int createTempLink(Player player) {
-        long nameTimestamp = playerManager.nameTimestampMillis(player);
         String correctUsername = playerManager.correctUsername(player);
-        var linkRequest = new LinkRequest(createCode(), PENDING_LINK_TTL_MILLIS, player.getUniqueId(), correctUsername, nameTimestamp);
+        var linkRequest = new LinkRequest(createCode(), PENDING_LINK_TTL_MILLIS, player.getUniqueId(), correctUsername);
 
         linkRequests.put(linkRequest.code(), linkRequest);
         linkRequestForPlayer.put(player.getUniqueId(), linkRequest.code());
@@ -102,32 +99,6 @@ public final class LinkManager {
         return CompletableFuture.supplyAsync(
                 () -> {
                     try (Connection connection = database.connection()) {
-                        try (PreparedStatement query = connection.prepareStatement("""
-                                INSERT INTO java_identity_current AS c(id, username, detected_at)
-                                VALUES (?::uuid, ?, ?)
-                                ON CONFLICT (id) DO
-                                  UPDATE SET username = EXCLUDED.username, detected_at = EXCLUDED.detected_at
-                                  WHERE c.detected_at <= EXCLUDED.detected_at AND c.username != EXCLUDED.username
-                                """)) {
-                            query.setString(1, linkRequest.javaId().toString());
-                            query.setString(2, linkRequest.javaUsername());
-                            query.setTimestamp(3, Timestamp.from(Instant.EPOCH.plusMillis(linkRequest.javaNameTimestamp())));
-                            query.executeUpdate();
-                        }
-
-                        try (PreparedStatement query = connection.prepareStatement("""
-                                INSERT INTO xbox_identity_current AS c(xuid, gamertag, detected_at)
-                                VALUES (?::xuid, ?, ?)
-                                ON CONFLICT (xuid) DO
-                                  UPDATE SET gamertag = EXCLUDED.gamertag, detected_at = EXCLUDED.detected_at
-                                  WHERE c.detected_at <= EXCLUDED.detected_at AND c.gamertag != EXCLUDED.gamertag
-                                """)) {
-                            query.setLong(1, linkRequest.bedrockId());
-                            query.setString(2, linkRequest.bedrockName());
-                            query.setTimestamp(3, Timestamp.from(Instant.EPOCH.plusMillis(linkRequest.bedrockNameTimestamp())));
-                            query.executeUpdate();
-                        }
-
                         try (PreparedStatement query = connection.prepareStatement("""
                                 INSERT INTO links (xuid, java_id)
                                 VALUES (?::xuid, ?::uuid)

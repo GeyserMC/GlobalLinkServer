@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 GeyserMC
+ * Copyright (c) 2021-2026 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
@@ -18,14 +18,12 @@ public final class LinkRequest {
     private final long expiryTime;
     private final UUID requesterUuid;
     private final String requesterUsername;
-    private final long nameTimestamp;
 
-    public LinkRequest(int code, long ttl, UUID requesterUuid, String requesterUsername, long nameTimestamp) {
+    public LinkRequest(int code, long ttl, UUID requesterUuid, String requesterUsername) {
         this.code = code;
         this.expiryTime = System.nanoTime() + ttl;
         this.requesterUuid = requesterUuid;
         this.requesterUsername = requesterUsername;
-        this.nameTimestamp = nameTimestamp;
     }
 
     public @Nullable Player requester() {
@@ -48,10 +46,6 @@ public final class LinkRequest {
         return requesterUsername;
     }
 
-    public long nameTimestamp() {
-        return nameTimestamp;
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
@@ -60,13 +54,12 @@ public final class LinkRequest {
         return this.code == that.code &&
             this.expiryTime == that.expiryTime &&
             Objects.equals(this.requesterUuid, that.requesterUuid) &&
-            Objects.equals(this.requesterUsername, that.requesterUsername) &&
-            this.nameTimestamp == that.nameTimestamp;
+            Objects.equals(this.requesterUsername, that.requesterUsername);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(code, expiryTime, requesterUuid, requesterUsername, nameTimestamp);
+        return Objects.hash(code, expiryTime, requesterUuid, requesterUsername);
     }
 
     @Override
@@ -75,8 +68,7 @@ public final class LinkRequest {
             "code=" + code + ", " +
             "expiryTime=" + expiryTime + ", " +
             "requesterUuid=" + requesterUuid + ", " +
-            "requesterUsername=" + requesterUsername + ", " +
-            "nameTimestamp=" + nameTimestamp + ']';
+            "requesterUsername=" + requesterUsername + ']';
     }
 
 }

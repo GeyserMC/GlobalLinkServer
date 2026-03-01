@@ -1,5 +1,5 @@
 [versions]
-geyser = "2.8.4-SNAPSHOT"
+geyser = "2.9.4-SNAPSHOT"
 floodgate = "2.2.3-SNAPSHOT"
 hikari = "7.0.2"
 postgresql = "42.7.8"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 GeyserMC
+ * Copyright (c) 2021-2026 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
@@ -43,6 +43,7 @@ import org.geysermc.globallinkserver.manager.DatabaseManager;
 import org.geysermc.globallinkserver.manager.PlayerManager;
 import org.geysermc.globallinkserver.service.LinkInfoService;
 import org.geysermc.globallinkserver.service.LinkLookupService;
+import org.geysermc.globallinkserver.service.MappingService;
 import org.geysermc.globallinkserver.util.MultiConditionSet;
 import org.geysermc.globallinkserver.util.Utils;
 
@@ -73,6 +74,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
         var linkManager = new LinkManager(playerManager, databaseManager);
         linkLookupService = new LinkLookupService(playerManager, databaseManager);
         linkInfoService = new LinkInfoService(linkLookupService, playerManager);
+        var mappingService = new MappingService(databaseManager);
 
         var commandUtils = new CommandHandler(linkLookupService, linkInfoService, linkManager, playerManager, this);
 
@@ -83,7 +85,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
         var pluginManager = getServer().getPluginManager();
         pluginManager.registerEvents(this, this);
-        pluginManager.registerEvents(new JoinHandler(linkLookupService, playerIdleTracker, this), this);
+        pluginManager.registerEvents(new JoinHandler(playerManager, linkLookupService, mappingService, playerIdleTracker, this), this);
         pluginManager.registerEvents(new MoveInactivityHandler(playerIdleTracker), this);
         pluginManager.registerEvents(new TeleportToSpawnHandler(config.spawn()), this);
 
