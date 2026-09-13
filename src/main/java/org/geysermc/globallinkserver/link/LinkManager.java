@@ -96,6 +96,7 @@ public final class LinkManager {
     }
 
     public CompletableFuture<Boolean> finaliseLink(Link linkRequest) {
+        // We already store the required mappings on join, otherwise we'd fail here
         return CompletableFuture.supplyAsync(
                 () -> {
                     try (Connection connection = database.connection()) {

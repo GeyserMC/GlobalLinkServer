@@ -8,7 +8,6 @@ package org.geysermc.globallinkserver.service;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -29,13 +28,13 @@ public final class MappingService {
             try (Connection connection = database.connection()) {
                 try (PreparedStatement query = connection.prepareStatement("""
                         INSERT INTO java_identity_current AS c(id, username, detected_at)
-                        VALUES (?::uuid, ?, ?)
+                        VALUES (?::uuid, ?, ?::timestamptz)
                         ON CONFLICT (id) DO
                           UPDATE SET username = EXCLUDED.username, detected_at = EXCLUDED.detected_at
                           WHERE c.detected_at <= EXCLUDED.detected_at AND c.username != EXCLUDED.username""")) {
                     query.setString(1, uuid.toString());
                     query.setString(2, username);
-                    query.setTimestamp(3, Timestamp.from(Instant.ofEpochMilli(retrievedAtMillis)));
+                    query.setString(3, Instant.ofEpochMilli(retrievedAtMillis).toString());
                     query.executeUpdate();
                 }
             } catch (SQLException exception) {
@@ -50,13 +49,13 @@ public final class MappingService {
             try (Connection connection = database.connection()) {
                 try (PreparedStatement query = connection.prepareStatement("""
                         INSERT INTO xbox_identity_current AS c(xuid, gamertag, detected_at)
-                        VALUES (?::xuid, ?, ?)
+                        VALUES (?::xuid, ?, ?::timestamptz)
                         ON CONFLICT (xuid) DO
                           UPDATE SET gamertag = EXCLUDED.gamertag, detected_at = EXCLUDED.detected_at
                           WHERE c.detected_at <= EXCLUDED.detected_at AND c.gamertag != EXCLUDED.gamertag""")) {
                     query.setLong(1, xuid);
                     query.setString(2, gamertag);
-                    query.setTimestamp(3, Timestamp.from(issuedAtInstant));
+                    query.setString(3, issuedAtInstant.toString());
                     query.executeUpdate();
                 }
                 try (PreparedStatement query = connection.prepareStatement("""
@@ -65,7 +64,7 @@ public final class MappingService {
                         ON CONFLICT (id) DO NOTHING""")) {
                     query.setString(1, playfabId);
                     query.setLong(2, xuid);
-                    query.setTimestamp(3, Timestamp.from(issuedAtInstant));
+                    query.setString(3, issuedAtInstant.toString());
                     query.executeUpdate();
                 }
             } catch (SQLException exception) {
