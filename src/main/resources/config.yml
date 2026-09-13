@@ -1,8 +1,8 @@
 database:
   hostname: 127.0.0.1
-  username: global_link
-  password: some_pass
-  database: global_link_dev
+  username: global_api
+  password: global_api_dev
+  database: global_api_dev
   max-pool-size: 3
 
 spawn:

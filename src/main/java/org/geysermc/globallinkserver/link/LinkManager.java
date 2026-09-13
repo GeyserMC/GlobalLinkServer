@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 GeyserMC
+ * Copyright (c) 2021-2026 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
@@ -46,7 +46,8 @@ public final class LinkManager {
     }
 
     public int createTempLink(Player player) {
-        var linkRequest = new LinkRequest(createCode(), PENDING_LINK_TTL_MILLIS, player);
+        String correctUsername = playerManager.correctUsername(player);
+        var linkRequest = new LinkRequest(createCode(), PENDING_LINK_TTL_MILLIS, player.getUniqueId(), correctUsername);
 
         linkRequests.put(linkRequest.code(), linkRequest);
         linkRequestForPlayer.put(player.getUniqueId(), linkRequest.code());
@@ -95,18 +96,17 @@ public final class LinkManager {
     }
 
     public CompletableFuture<Boolean> finaliseLink(Link linkRequest) {
+        // We already store the required mappings on join, otherwise we'd fail here
         return CompletableFuture.supplyAsync(
                 () -> {
                     try (Connection connection = database.connection()) {
-                        try (PreparedStatement query = connection.prepareStatement(
-                                "INSERT INTO `links` (`java_id`, `bedrock_id`, `java_name`) VALUES (?, ?, ?) "
-                                        + "ON DUPLICATE KEY UPDATE "
-                                        + "`java_id` = VALUES(`java_id`),"
-                                        + "`bedrock_id` = VALUES(`bedrock_id`),"
-                                        + "`java_name` = VALUES(`java_name`);")) {
-                            query.setString(1, linkRequest.javaId().toString());
-                            query.setLong(2, linkRequest.bedrockId());
-                            query.setString(3, linkRequest.javaUsername());
+                        try (PreparedStatement query = connection.prepareStatement("""
+                                INSERT INTO links (xuid, java_id)
+                                VALUES (?::xuid, ?::uuid)
+                                ON CONFLICT (xuid) DO
+                                  UPDATE SET java_id = EXCLUDED.java_id, inserted_at = EXCLUDED.inserted_at""")) {
+                            query.setLong(1, linkRequest.bedrockId());
+                            query.setString(2, linkRequest.javaId().toString());
                             return query.executeUpdate() != 0;
                         }
                     } catch (SQLException exception) {
@@ -122,10 +122,10 @@ public final class LinkManager {
                     try (Connection connection = database.connection()) {
                         PreparedStatement query;
                         if (playerManager.isBedrockPlayer(player)) {
-                            query = connection.prepareStatement("DELETE FROM `links` WHERE `bedrock_id` = ?;");
+                            query = connection.prepareStatement("DELETE FROM links WHERE xuid = ?::xuid");
                             query.setLong(1, player.getUniqueId().getLeastSignificantBits());
                         } else {
-                            query = connection.prepareStatement("DELETE FROM `links` WHERE `java_id` = ?;");
+                            query = connection.prepareStatement("DELETE FROM links WHERE java_id = ?::uuid");
                             query.setString(1, player.getUniqueId().toString());
                         }
                         boolean affected = query.executeUpdate() != 0;

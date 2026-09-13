@@ -1,24 +1,27 @@
 /*
- * Copyright (c) 2025 GeyserMC
+ * Copyright (c) 2025-2026 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
 package org.geysermc.globallinkserver.manager;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import org.bukkit.entity.Player;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
+import org.geysermc.geyser.GeyserImpl;
+import org.geysermc.geyser.session.GeyserSession;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 @NullMarked
 public final class PlayerManager {
     private final FloodgateApi api;
+    private final GeyserImpl geyserImpl;
 
-    public PlayerManager(FloodgateApi api) {
+    public PlayerManager(FloodgateApi api, GeyserImpl geyserImpl) {
         this.api = api;
+        this.geyserImpl = geyserImpl;
     }
 
     public boolean isBedrockPlayer(Player player) {
@@ -33,7 +36,26 @@ public final class PlayerManager {
         return api.getPlayer(uuid);
     }
 
-    public CompletableFuture<@Nullable String> fetchGamertagFor(long xuid) {
-        return api.getGamertagFor(xuid);
+    public @Nullable GeyserSession bedrockSession(Player player) {
+        // There is no linking in the linking server itself, only link management
+        if (player.getUniqueId().getMostSignificantBits() != 0L) {
+            return null;
+        }
+
+        String xuid = String.valueOf(player.getUniqueId().getLeastSignificantBits());
+        for (GeyserSession session : geyserImpl.getSessionManager().getAllSessions()) {
+            if (session.xuid().equals(xuid)) {
+                return session;
+            }
+        }
+        return null;
+    }
+
+    public String correctUsername(Player player) {
+        FloodgatePlayer floodgatePlayer = bedrockPlayer(player.getUniqueId());
+        if (floodgatePlayer == null) {
+            return player.getName();
+        }
+        return floodgatePlayer.getUsername();
     }
 }

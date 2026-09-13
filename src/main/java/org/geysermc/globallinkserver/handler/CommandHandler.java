@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 GeyserMC
+ * Copyright (c) 2021-2026 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
@@ -83,7 +83,8 @@ public final class CommandHandler {
             return Command.SINGLE_SUCCESS;
         }
 
-        var completedLink = Link.fromRequest(linkRequest, player.getUniqueId(), player.getName(), isRequesterBedrock);
+        String correctUsername = playerManager.correctUsername(player);
+        Link completedLink = Link.fromRequest(linkRequest, player.getUniqueId(), correctUsername, isRequesterBedrock);
 
         linkManager.finaliseLink(completedLink).whenComplete((result, error) -> {
             if (error != null || !result) {

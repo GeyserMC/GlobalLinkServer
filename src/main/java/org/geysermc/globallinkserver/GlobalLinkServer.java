@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 GeyserMC
+ * Copyright (c) 2021-2026 GeyserMC
  * Licensed under the MIT license
  * @link https://github.com/GeyserMC/GlobalLinkServer
  */
@@ -22,7 +22,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -33,6 +32,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.floodgate.api.FloodgateApi;
+import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.globallinkserver.config.ConfigReader;
 import org.geysermc.globallinkserver.handler.CommandHandler;
 import org.geysermc.globallinkserver.handler.JoinHandler;
@@ -43,6 +43,7 @@ import org.geysermc.globallinkserver.manager.DatabaseManager;
 import org.geysermc.globallinkserver.manager.PlayerManager;
 import org.geysermc.globallinkserver.service.LinkInfoService;
 import org.geysermc.globallinkserver.service.LinkLookupService;
+import org.geysermc.globallinkserver.service.MappingService;
 import org.geysermc.globallinkserver.util.MultiConditionSet;
 import org.geysermc.globallinkserver.util.Utils;
 
@@ -68,11 +69,12 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
     public void onEnable() {
         var config = ConfigReader.readConfig(this);
 
-        var playerManager = new PlayerManager(FloodgateApi.getInstance());
+        var playerManager = new PlayerManager(FloodgateApi.getInstance(), GeyserImpl.getInstance());
         var databaseManager = new DatabaseManager(config);
         var linkManager = new LinkManager(playerManager, databaseManager);
         linkLookupService = new LinkLookupService(playerManager, databaseManager);
         linkInfoService = new LinkInfoService(linkLookupService, playerManager);
+        var mappingService = new MappingService(databaseManager);
 
         var commandUtils = new CommandHandler(linkLookupService, linkInfoService, linkManager, playerManager, this);
 
@@ -83,7 +85,7 @@ public class GlobalLinkServer extends JavaPlugin implements Listener {
 
         var pluginManager = getServer().getPluginManager();
         pluginManager.registerEvents(this, this);
-        pluginManager.registerEvents(new JoinHandler(linkLookupService, playerIdleTracker, this), this);
+        pluginManager.registerEvents(new JoinHandler(playerManager, linkLookupService, mappingService, playerIdleTracker, this), this);
         pluginManager.registerEvents(new MoveInactivityHandler(playerIdleTracker), this);
         pluginManager.registerEvents(new TeleportToSpawnHandler(config.spawn()), this);
 
